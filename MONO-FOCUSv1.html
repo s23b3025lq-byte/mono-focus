@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MONO-FOCUS</title>
+  <!-- Swiss style typography: Inter google font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-full bg-white text-black selection:bg-black selection:text-white m-0 p-0 font-sans antialiased">
+
+  <div class="h-full flex flex-col justify-between">
+    
+    <!-- 1. BRAIN DUMP SCREEN -->
+    <section id="screen-dump" class="flex-1 flex flex-col justify-between p-8 md:p-16">
+      <header class="swiss-grid font-sans tracking-tight">
+        <div>
+          <h1 class="logo text-xl md:text-2xl font-black uppercase tracking-tighter leading-none">
+            MONO-FOCUS
+          </h1>
+        </div>
+        <div class="text-right">
+          <p class="phase-indicator text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase">
+            Phase 01 / Dump
+          </p>
+        </div>
+      </header>
+
+      <main class="flex-1 flex flex-col justify-center items-start my-auto w-full max-w-5xl">
+        <div class="w-full">
+          <input
+            id="dump-input"
+            type="text"
+            class="dump-input w-full bg-transparent border-none outline-none font-bold tracking-tighter text-black placeholder-neutral-200 uppercase p-0 m-0"
+            placeholder="WHAT IS NEXT?"
+            autocomplete="off"
+            autofocus
+          />
+        </div>
+      </main>
+
+      <footer class="swiss-grid font-sans tracking-tight">
+        <div class="footer-info flex flex-col justify-end">
+          <p class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-400 leading-relaxed">
+            Brain Dump Mode
+          </p>
+          <p class="text-xs md:text-sm font-medium text-neutral-400 mt-1">
+            Write one task and press Enter to stack. Keep stacking silently.
+          </p>
+        </div>
+        <div class="footer-action flex flex-col md:items-end justify-end">
+          <div id="start-focus-container" class="hidden">
+            <button
+              id="start-focus-btn"
+              class="action-btn text-left md:text-right text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer focus:outline-none border-none bg-transparent p-0"
+            >
+              Start Focus (<span id="stacked-count">0</span> Stacked) ➔
+            </button>
+          </div>
+          <p id="empty-stack-indicator" class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-300">
+            Stack is empty
+          </p>
+          <p class="text-neutral-400 text-xs mt-1 md:text-right">
+            Press Shift+Enter to quick-start focus.
+          </p>
+        </div>
+      </footer>
+    </section>
+
+    <!-- 2. MONO FOCUS SCREEN -->
+    <section id="screen-focus" class="flex-1 flex flex-col justify-between p-8 md:p-16 hidden">
+      <header class="swiss-grid font-sans tracking-tight">
+        <div>
+          <button
+            id="back-to-dump-btn"
+            class="logo text-xs md:text-sm font-bold tracking-widest uppercase hover:opacity-50 transition-opacity focus:outline-none cursor-pointer border-none bg-transparent p-0 text-black"
+          >
+            ➔ MONO-FOCUS
+          </button>
+        </div>
+        <div class="text-right">
+          <p class="phase-indicator text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase">
+            Phase 02 / Focus
+          </p>
+        </div>
+      </header>
+
+      <main class="flex-1 grid-focus items-center my-auto w-full max-w-7xl">
+        <!-- Left Side: Task Text -->
+        <div class="task-container flex flex-col justify-center min-h-[300px]">
+          <p class="text-xs md:text-sm font-bold tracking-widest text-neutral-400 uppercase mb-4">
+            CURRENT TARGET
+          </p>
+          <div id="active-task-wrapper">
+            <h2 id="active-task-text" class="task-title font-black uppercase tracking-tighter leading-none break-words">
+              TASK TEXT HERE
+            </h2>
+          </div>
+        </div>
+
+        <!-- Right Side: Timer -->
+        <div class="timer-container flex flex-col items-start lg:items-end justify-center">
+          <p class="text-xs md:text-sm font-bold tracking-widest text-neutral-400 uppercase mb-2 lg:text-right w-full">
+            TIME REMAINING
+          </p>
+          <div class="w-full lg:text-right">
+            <button
+              id="timer-btn"
+              class="timer-display font-light tracking-tighter tabular-nums hover:opacity-60 transition-opacity focus:outline-none cursor-pointer select-none leading-none -ml-2 lg:ml-0 border-none bg-transparent p-0 text-black"
+              title="Click to Pause/Play (Spacebar)"
+            >
+              25:00
+            </button>
+          </div>
+          <div class="flex flex-row gap-4 mt-2 justify-start lg:justify-end w-full">
+            <p id="timer-status" class="text-xs font-bold tracking-widest uppercase text-neutral-400">
+              PAUSED
+            </p>
+            <span class="text-neutral-300 text-xs">•</span>
+            <button
+              id="reset-timer-btn"
+              class="text-xs font-bold tracking-widest uppercase hover:opacity-50 cursor-pointer focus:outline-none text-neutral-400 border-none bg-transparent p-0"
+            >
+              RESET TIMER
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <footer class="swiss-grid font-sans tracking-tight pt-8 border-t-0">
+        <div class="footer-info flex flex-col justify-end">
+          <p class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-400">
+            Task Queue
+          </p>
+          <p class="text-xs md:text-sm font-medium text-neutral-400 mt-1">
+            <span id="queue-count">0</span> task<span id="queue-plural">s</span> remaining in queue. No distraction allowed.
+          </p>
+        </div>
+        <div class="footer-action flex flex-row md:justify-end items-end gap-12">
+          <button
+            id="skip-task-btn"
+            class="action-btn text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer focus:outline-none border-none bg-transparent p-0"
+          >
+            SKIP ➔
+          </button>
+          <button
+            id="complete-task-btn"
+            class="action-btn text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer focus:outline-none border-none bg-transparent p-0"
+          >
+            COMPLETE ✔
+          </button>
+        </div>
+      </footer>
+    </section>
+
+    <!-- 3. SUMMARY SCREEN -->
+    <section id="screen-summary" class="flex-1 flex flex-col justify-between p-8 md:p-16 hidden">
+      <header class="swiss-grid font-sans tracking-tight">
+        <div>
+          <h1 class="logo text-xl md:text-2xl font-black uppercase tracking-tighter leading-none">
+            MONO-FOCUS
+          </h1>
+        </div>
+        <div class="text-right">
+          <p class="phase-indicator text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase">
+            Phase 03 / Summary
+          </p>
+        </div>
+      </header>
+
+      <main class="flex-1 flex flex-col justify-center my-auto w-full max-w-5xl py-12 md:py-16">
+        <div class="swiss-grid gap-12 md:gap-16 w-full">
+          <!-- Completed column -->
+          <div class="flex flex-col justify-start">
+            <p class="text-xs md:text-sm font-bold tracking-widest text-neutral-400 uppercase mb-2">
+              SUCCESS RATE
+            </p>
+            <div class="flex items-baseline gap-2">
+              <span id="summary-completed-count" class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter tabular-nums leading-none">
+                00
+              </span>
+              <span class="text-xl md:text-2xl font-bold text-neutral-400">/ COMPLETED</span>
+            </div>
+            <div id="summary-completed-list" class="mt-8 space-y-3">
+              <!-- JS Injected List -->
+            </div>
+          </div>
+
+          <!-- Skipped column -->
+          <div class="flex flex-col justify-start">
+            <p class="text-xs md:text-sm font-bold tracking-widest text-neutral-400 uppercase mb-2">
+              SKIPPED TARGETS
+            </p>
+            <div class="flex items-baseline gap-2">
+              <span id="summary-skipped-count" class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter tabular-nums leading-none text-neutral-300">
+                00
+              </span>
+              <span class="text-xl md:text-2xl font-bold text-neutral-400">/ SKIPPED</span>
+            </div>
+            <div id="summary-skipped-list" class="mt-8 space-y-3">
+              <!-- JS Injected List -->
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="swiss-grid font-sans tracking-tight">
+        <div class="footer-info flex flex-col justify-end">
+          <p class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-400">
+            Focus Session Concluded
+          </p>
+          <p class="text-xs md:text-sm font-medium text-neutral-400 mt-1">
+            Your mind is empty and focused. Ready for the next run.
+          </p>
+        </div>
+        <div class="footer-action flex flex-col md:items-end justify-end">
+          <button
+            id="restart-session-btn"
+            class="action-btn text-left md:text-right text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer focus:outline-none border-none bg-transparent p-0"
+          >
+            Start New Session ➔
+          </button>
+          <p class="text-neutral-400 text-xs mt-1 md:text-right">
+            Clears all completed tasks and restarts dump.
+          </p>
+        </div>
+      </footer>
+    </section>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
