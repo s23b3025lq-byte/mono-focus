@@ -1,4 +1,4 @@
-// MONO-FOCUS State & Logic
+// MONO-FOCUS v2 State & Logic
 
 const state = {
   tasks: [], // Array of { id: string, text: string, status: 'pending' | 'completed' | 'skipped' }
@@ -6,7 +6,17 @@ const state = {
   currentTaskIndex: 0,
   timerSeconds: 1500, // 25 minutes in seconds
   isTimerActive: false,
-  timerInterval: null
+  timerInterval: null,
+
+  // v2 States
+  isMicroStep: false, // Is currently running the 2-min start phase
+  warpCount: 0, // Number of times user strayed from focus
+  isInWarp: false, // Is user currently tabbed away or out of focus
+  warpStartTime: null,
+  totalWarpDuration: 0, // Cumulative time wasted (seconds)
+  totalFocusDuration: 0, // Cumulative actual work time (seconds)
+  autoResumeTimer: 15, // Countdown before auto resuming pause
+  autoResumeInterval: null
 };
 
 // DOM Elements
@@ -28,7 +38,6 @@ const elements = {
   activeTaskWrapper: document.getElementById('active-task-wrapper'),
   timerBtn: document.getElementById('timer-btn'),
   timerStatus: document.getElementById('timer-status'),
-  resetTimerBtn: document.getElementById('reset-timer-btn'),
   queueCount: document.getElementById('queue-count'),
   queuePlural: document.getElementById('queue-plural'),
   skipTaskBtn: document.getElementById('skip-task-btn'),
@@ -39,43 +48,196 @@ const elements = {
   summaryCompletedList: document.getElementById('summary-completed-list'),
   summarySkippedCount: document.getElementById('summary-skipped-count'),
   summarySkippedList: document.getElementById('summary-skipped-list'),
-  restartSessionBtn: document.getElementById('restart-session-btn')
+  restartSessionBtn: document.getElementById('restart-session-btn'),
+
+  // v2 UI Elements
+  launcherOverlay: document.getElementById('launcher-overlay'),
+  launcherTaskText: document.getElementById('launcher-task-text'),
+  launchMicroBtn: document.getElementById('launch-micro-btn'),
+  launchFullBtn: document.getElementById('launch-full-btn'),
+  activeMicroBadge: document.getElementById('active-micro-badge'),
+  warpCounterTag: document.getElementById('warp-counter-tag'),
+  warpCountVal: document.getElementById('warp-count-val'),
+  warpOverlay: document.getElementById('warp-overlay'),
+
+  // Summary Metrics Elements
+  statEfficiency: document.getElementById('stat-efficiency'),
+  statWarps: document.getElementById('stat-warps'),
+  statCompleted: document.getElementById('stat-completed'),
+  statTime: document.getElementById('stat-time')
 };
 
-// Play audio beep when timer finishes
-function playBeep() {
+// Synth Audio Engine (v2 expanded)
+function playSynthSound(type) {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch A5
-    gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.15); // short 150ms beep
+    const now = audioCtx.currentTime;
+
+    if (type === 'success') {
+      // Pleasant melodic chime (C5 -> E5 -> G5)
+      const notes = [
+        { freq: 523.25, offset: 0 },    // C5
+        { freq: 659.25, offset: 0.1 },  // E5
+        { freq: 783.99, offset: 0.2 }   // G5
+      ];
+      notes.forEach(note => {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(note.freq, now + note.offset);
+        gainNode.gain.setValueAtTime(0.04, now + note.offset);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + note.offset + 0.4);
+        osc.start(now + note.offset);
+        osc.stop(now + note.offset + 0.45);
+      });
+    } 
+    else if (type === 'alert') {
+      // Dissonant alarming sawtooth sweep (low pitch warning)
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      osc1.connect(gainNode);
+      osc2.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      osc1.type = "sawtooth";
+      osc2.type = "sawtooth";
+      osc1.frequency.setValueAtTime(110, now);
+      osc2.frequency.setValueAtTime(114, now); // Detuned for dissonance
+
+      gainNode.gain.setValueAtTime(0.08, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.55);
+      osc2.stop(now + 0.55);
+    } 
+    else if (type === 'nudge') {
+      // Simple high click/tick sound
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1000, now);
+      gainNode.gain.setValueAtTime(0.03, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } 
+    else if (type === 'resume') {
+      // Upward sliding sound
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(587.33, now + 0.25); // Sweep to D5
+      gainNode.gain.setValueAtTime(0.04, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.28);
+    } 
+    else {
+      // Default short A5 beep
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, now);
+      gainNode.gain.setValueAtTime(0.04, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.18);
+    }
   } catch (e) {
     console.error("Synthesizer playback blocked/failed", e);
   }
 }
 
-// Timer tick handler
+// Visibility Shield Management (v2)
+function initVisibilityShield() {
+  const triggerWarp = () => {
+    if (state.appState !== 'FOCUS' || !state.isTimerActive || state.isInWarp) return;
+    
+    state.isInWarp = true;
+    state.warpCount++;
+    state.warpStartTime = Date.now();
+
+    // Show warnings
+    elements.warpOverlay.classList.remove('hidden');
+    elements.warpCounterTag.classList.remove('hidden');
+    elements.warpCountVal.textContent = state.warpCount;
+
+    // Pause timer progress during warp but keep active state
+    stopTimerInterval();
+    stopAutoResumeCountdown(); // Clear nudges while user is tabbed away
+    playSynthSound('alert');
+  };
+
+  const resolveWarp = () => {
+    if (state.appState !== 'FOCUS' || !state.isInWarp) return;
+    
+    state.isInWarp = false;
+    if (state.warpStartTime) {
+      state.totalWarpDuration += Math.floor((Date.now() - state.warpStartTime) / 1000);
+    }
+
+    elements.warpOverlay.classList.add('hidden');
+    
+    // Auto-resume timer
+    if (state.isTimerActive) {
+      startTimerInterval();
+    }
+  };
+
+  // Listeners
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      triggerWarp();
+    } else {
+      resolveWarp();
+    }
+  });
+
+  window.addEventListener('blur', triggerWarp);
+  window.addEventListener('focus', resolveWarp);
+}
+
+// Timer Tick Engine
 function startTimerInterval() {
   if (state.timerInterval) clearInterval(state.timerInterval);
   
   state.timerInterval = setInterval(() => {
     if (state.timerSeconds > 0) {
       state.timerSeconds--;
+      state.totalFocusDuration++;
       updateTimerDisplay();
     } else {
       stopTimerInterval();
       state.isTimerActive = false;
       elements.timerStatus.textContent = "PAUSED";
-      playBeep();
+      
+      if (state.isMicroStep) {
+        // Micro-step completes -> Trigger full 25-min session
+        state.isMicroStep = false;
+        state.timerSeconds = 1500; // 25 min
+        state.isTimerActive = true;
+        
+        elements.activeMicroBadge.classList.add('hidden');
+        playSynthSound('success');
+        updateTimerDisplay();
+        startTimerInterval();
+      } else {
+        playSynthSound('success');
+        completeTask();
+      }
     }
   }, 1000);
 }
@@ -92,6 +254,44 @@ function updateTimerDisplay() {
   const secs = state.timerSeconds % 60;
   const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   elements.timerBtn.textContent = timeString;
+}
+
+// Pause Nudge Countdown (v2)
+function startAutoResumeCountdown() {
+  stopAutoResumeCountdown();
+  if (state.isInWarp || !state.isTimerActive) return;
+
+  state.autoResumeTimer = 15;
+  document.body.classList.add('animate-pulse-bg');
+  elements.timerStatus.textContent = `PAUSED (AUTO-RESUME IN ${state.autoResumeTimer}S)`;
+
+  state.autoResumeInterval = setInterval(() => {
+    if (state.autoResumeTimer > 1) {
+      state.autoResumeTimer--;
+      elements.timerStatus.textContent = `PAUSED (AUTO-RESUME IN ${state.autoResumeTimer}S)`;
+      if (state.autoResumeTimer <= 5) {
+        playSynthSound('nudge');
+      }
+    } else {
+      // Resume automatically
+      stopAutoResumeCountdown();
+      playSynthSound('resume');
+      state.isTimerActive = true;
+      startTimerInterval();
+      elements.timerStatus.textContent = "RUNNING";
+    }
+  }, 1000);
+}
+
+function stopAutoResumeCountdown() {
+  if (state.autoResumeInterval) {
+    clearInterval(state.autoResumeInterval);
+    state.autoResumeInterval = null;
+  }
+  document.body.classList.remove('animate-pulse-bg');
+  if (state.appState === 'FOCUS') {
+    elements.timerStatus.textContent = state.isTimerActive ? "RUNNING" : "PAUSED";
+  }
 }
 
 // Render screens according to state
@@ -169,6 +369,21 @@ function render() {
         elements.summarySkippedList.appendChild(item);
       });
     }
+
+    // Render stats metrics
+    // Focus Efficiency Calculation: penalty for warps and duration in warp
+    const warpPenalty = state.warpCount * 10;
+    const durationPenalty = Math.floor(state.totalWarpDuration / 12); // -1% every 12s tabbed out
+    const efficiency = Math.max(0, 100 - warpPenalty - durationPenalty);
+
+    elements.statEfficiency.textContent = `${efficiency}%`;
+    elements.statWarps.textContent = state.warpCount.toString().padStart(2, '0');
+    elements.statCompleted.textContent = completedTasks.length.toString().padStart(2, '0');
+
+    // Total focus duration formatting (MM:SS)
+    const statMins = Math.floor(state.totalFocusDuration / 60);
+    const statSecs = state.totalFocusDuration % 60;
+    elements.statTime.textContent = `${statMins.toString().padStart(2, '0')}:${statSecs.toString().padStart(2, '0')}`;
   }
 }
 
@@ -188,11 +403,41 @@ function startFocus() {
   if (firstPendingIdx !== -1) {
     state.currentTaskIndex = firstPendingIdx;
     state.appState = 'FOCUS';
+    
+    // Stop any active counts
+    stopTimerInterval();
+    stopAutoResumeCountdown();
+    
+    // Reset timer state for new task selection
     state.timerSeconds = 1500;
     state.isTimerActive = false;
-    stopTimerInterval();
+    state.isMicroStep = false;
+    
     render();
+    
+    // Show Action Launcher Overlay to prompt user
+    elements.launcherTaskText.textContent = state.tasks[state.currentTaskIndex].text;
+    elements.launcherOverlay.classList.remove('hidden');
   }
+}
+
+function selectLaunchOption(mode) {
+  elements.launcherOverlay.classList.add('hidden');
+  
+  if (mode === 'micro') {
+    state.isMicroStep = true;
+    state.timerSeconds = 120; // 2 minutes (120s)
+    elements.activeMicroBadge.classList.remove('hidden');
+  } else {
+    state.isMicroStep = false;
+    state.timerSeconds = 1500; // 25 minutes
+    elements.activeMicroBadge.classList.add('hidden');
+  }
+  
+  state.isTimerActive = true;
+  startTimerInterval();
+  playSynthSound('resume');
+  render();
 }
 
 function moveToNextTask() {
@@ -201,12 +446,20 @@ function moveToNextTask() {
     state.currentTaskIndex = nextPendingIdx;
     state.timerSeconds = 1500;
     state.isTimerActive = false;
+    state.isMicroStep = false;
+    elements.activeMicroBadge.classList.add('hidden');
     stopTimerInterval();
+    stopAutoResumeCountdown();
     render();
+
+    // Prompt launcher for next task
+    elements.launcherTaskText.textContent = state.tasks[state.currentTaskIndex].text;
+    elements.launcherOverlay.classList.remove('hidden');
   } else {
     state.appState = 'SUMMARY';
     state.isTimerActive = false;
     stopTimerInterval();
+    stopAutoResumeCountdown();
     render();
   }
 }
@@ -226,20 +479,26 @@ function skipTask() {
 }
 
 function toggleTimer() {
+  if (state.isInWarp) return; // Disallow toggling when tabbed away
+
   state.isTimerActive = !state.isTimerActive;
   if (state.isTimerActive) {
+    stopAutoResumeCountdown();
     startTimerInterval();
     elements.timerStatus.textContent = "RUNNING";
   } else {
     stopTimerInterval();
     elements.timerStatus.textContent = "PAUSED";
+    // Trigger v2 Pause auto-resume count
+    startAutoResumeCountdown();
   }
 }
 
 function resetTimer() {
   stopTimerInterval();
+  stopAutoResumeCountdown();
   state.isTimerActive = false;
-  state.timerSeconds = 1500;
+  state.timerSeconds = state.isMicroStep ? 120 : 1500;
   updateTimerDisplay();
   elements.timerStatus.textContent = "PAUSED";
 }
@@ -250,7 +509,18 @@ function restartSession() {
   state.currentTaskIndex = 0;
   state.timerSeconds = 1500;
   state.isTimerActive = false;
+  state.isMicroStep = false;
+  state.warpCount = 0;
+  state.isInWarp = false;
+  state.totalWarpDuration = 0;
+  state.totalFocusDuration = 0;
+  
+  elements.activeMicroBadge.classList.add('hidden');
+  elements.warpCounterTag.classList.add('hidden');
+  elements.warpCountVal.textContent = "0";
+
   stopTimerInterval();
+  stopAutoResumeCountdown();
   render();
 }
 
@@ -278,6 +548,8 @@ elements.dumpInput.addEventListener('keydown', (e) => {
 elements.startFocusBtn.addEventListener('click', startFocus);
 
 elements.backToDumpBtn.addEventListener('click', () => {
+  stopTimerInterval();
+  stopAutoResumeCountdown();
   state.appState = 'DUMP';
   render();
 });
@@ -289,6 +561,10 @@ elements.completeTaskBtn.addEventListener('click', completeTask);
 elements.skipTaskBtn.addEventListener('click', skipTask);
 
 elements.restartSessionBtn.addEventListener('click', restartSession);
+
+// V2 Launcher Button handlers
+elements.launchMicroBtn.addEventListener('click', () => selectLaunchOption('micro'));
+elements.launchFullBtn.addEventListener('click', () => selectLaunchOption('full'));
 
 // Global window keybinds (Space to play/pause in focus screen)
 window.addEventListener('keydown', (e) => {
@@ -302,4 +578,5 @@ window.addEventListener('keydown', (e) => {
 });
 
 // Initialize on page load
+initVisibilityShield();
 render();

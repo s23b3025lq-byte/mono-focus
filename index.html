@@ -71,7 +71,38 @@
     </section>
 
     <!-- 2. MONO FOCUS SCREEN -->
-    <section id="screen-focus" class="flex-1 flex flex-col justify-between p-8 md:p-16 hidden">
+    <section id="screen-focus" class="flex-1 flex flex-col justify-between p-8 md:p-16 hidden relative transition-all-custom">
+      
+      <!-- Micro-step Action Launcher Overlay (v2) -->
+      <div id="launcher-overlay" class="launcher-overlay hidden">
+        <div class="max-w-2xl text-left flex flex-col items-start w-full">
+          <span class="micro-badge">ACTION LAUNCHER</span>
+          <h2 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-6">
+            HOW WILL YOU START?
+          </h2>
+          <p class="text-neutral-400 text-xs md:text-sm uppercase tracking-wider mb-8">
+            Target Task: <span id="launcher-task-text" class="font-bold text-black">TASK NAME</span>
+          </p>
+          <div class="flex flex-col md:flex-row gap-4 w-full">
+            <button
+              id="launch-micro-btn"
+              class="action-btn text-left text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer border-none bg-black text-white p-6 flex-1"
+            >
+              ➔ START WITH 2-MIN MICRO-STEP
+            </button>
+            <button
+              id="launch-full-btn"
+              class="action-btn text-left text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer border-2 border-black bg-transparent text-black p-6 flex-1"
+            >
+              ➔ START FULL SESSION (25-MIN)
+            </button>
+          </div>
+          <p class="text-neutral-400 text-xs mt-6 uppercase">
+            * Micro-step triggers automatic full session afterwards. Reduces start friction.
+          </p>
+        </div>
+      </div>
+
       <header class="swiss-grid font-sans tracking-tight">
         <div>
           <button
@@ -81,10 +112,14 @@
             ➔ MONO-FOCUS
           </button>
         </div>
-        <div class="text-right">
+        <div class="text-right flex flex-col items-end gap-1">
           <p class="phase-indicator text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase">
             Phase 02 / Focus
           </p>
+          <div class="flex flex-wrap gap-2 mt-1">
+            <span id="active-micro-badge" class="micro-badge hidden m-0">MICRO-STEP MODE</span>
+            <span id="warp-counter-tag" class="warp-tag hidden m-0">WARPS: <span id="warp-count-val">0</span></span>
+          </div>
         </div>
       </header>
 
@@ -172,6 +207,26 @@
       </header>
 
       <main class="flex-1 flex flex-col justify-center my-auto w-full max-w-5xl py-12 md:py-16">
+        <!-- V2 Focus Metrics Stats Bar -->
+        <div class="metrics-grid mb-12 border-b border-neutral-100 pb-8" style="border-bottom: 1px solid #f3f3f3; padding-bottom: 2rem; margin-bottom: 2rem;">
+          <div>
+            <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">Focus Efficiency</p>
+            <p id="stat-efficiency" class="text-3xl md:text-5xl font-black tracking-tighter">100%</p>
+          </div>
+          <div>
+            <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">Warp Incidents</p>
+            <p id="stat-warps" class="text-3xl md:text-5xl font-black tracking-tighter text-swiss-red">00</p>
+          </div>
+          <div>
+            <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">Completed Tasks</p>
+            <p id="stat-completed" class="text-3xl md:text-5xl font-black tracking-tighter">00</p>
+          </div>
+          <div>
+            <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">Total Focus Time</p>
+            <p id="stat-time" class="text-3xl md:text-5xl font-black tracking-tighter">00:00</p>
+          </div>
+        </div>
+
         <div class="swiss-grid gap-12 md:gap-16 w-full">
           <!-- Completed column -->
           <div class="flex flex-col justify-start">
@@ -230,6 +285,13 @@
       </footer>
     </section>
 
+  </div>
+
+  <!-- 4. WARP SHIELD ALERT OVERLAY (v2) -->
+  <div id="warp-overlay" class="hidden">
+    <div class="warp-title">Warp Detected</div>
+    <div class="warp-desc">Focus diverter detected. Return to your task immediately.</div>
+    <div class="text-xs uppercase tracking-widest text-white/50 mt-8">Focus will be penalised for long absence.</div>
   </div>
 
   <script src="script.js"></script>

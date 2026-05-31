@@ -149,3 +149,133 @@ html, body {
   color: #d4d4d4;
   margin-right: 0.75rem;
 }
+
+/* MONO-FOCUS v2 premium styles */
+
+/* Swiss red warning state */
+.bg-swiss-red {
+  background-color: #FF3B30 !important;
+  color: #ffffff !important;
+}
+
+.text-swiss-red {
+  color: #FF3B30 !important;
+}
+
+/* Pulsing background animation for pause nudge */
+@keyframes pulseBg {
+  0% { background-color: #ffffff; }
+  50% { background-color: #fafafa; }
+  100% { background-color: #ffffff; }
+}
+
+.animate-pulse-bg {
+  animation: pulseBg 2s infinite ease-in-out;
+}
+
+/* Warp Alert Overlay */
+#warp-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #FF3B30;
+  color: #ffffff;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  transition: opacity 0.3s ease;
+}
+
+.warp-title {
+  font-size: clamp(2rem, 7vw, 5.5rem);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  animation: warpPulse 1s infinite alternate;
+}
+
+@keyframes warpPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.02); }
+}
+
+.warp-desc {
+  font-size: clamp(0.9rem, 2vw, 1.4rem);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Micro-step Launcher overlay */
+.launcher-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+/* Warp Indicator & Tags */
+.warp-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #FF3B30;
+  border: 1px solid #FF3B30;
+  padding: 0.2rem 0.5rem;
+  font-family: 'Inter', sans-serif;
+  margin-left: 0.5rem;
+  display: inline-block;
+}
+
+/* Micro step badge */
+.micro-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #000000;
+  background-color: #f3f3f3;
+  padding: 0.2rem 0.5rem;
+  font-family: 'Inter', sans-serif;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+/* Smooth layout transition utility */
+.transition-all-custom {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Metrics grid for Summary Stats */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+
