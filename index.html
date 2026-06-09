@@ -22,7 +22,10 @@
             MONO-FOCUS
           </h1>
         </div>
-        <div class="text-right">
+        <div class="text-right flex items-center justify-end gap-4">
+          <button id="open-settings-btn" class="settings-btn" title="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
           <p class="phase-indicator text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase">
             Phase 01 / Dump
           </p>
@@ -40,9 +43,27 @@
             autofocus
           />
         </div>
+        <!-- AI action area (v3) -->
+        <div class="flex flex-row items-center gap-4 mt-6">
+          <button id="ai-decompose-btn" class="action-btn text-xs font-bold tracking-widest uppercase hover:opacity-50 transition-opacity cursor-pointer border-none bg-transparent p-0 text-neutral-400">
+            🤖 AI DECOMPOSE TASK
+          </button>
+          <div id="ai-loading" class="ai-loading-container hidden">
+            <span class="spinner"></span>
+            <span>Decomposing...</span>
+          </div>
+        </div>
       </main>
 
-      <footer class="swiss-grid font-sans tracking-tight">
+      <!-- Grass Calendar Area (v3) -->
+      <div class="grass-container w-full max-w-5xl">
+        <h3 class="grass-title">Focus Calendar (Last 30 Days)</h3>
+        <div id="grass-grid" class="grass-grid">
+          <!-- Rendered dynamically by script.js -->
+        </div>
+      </div>
+
+      <footer class="swiss-grid font-sans tracking-tight mt-8">
         <div class="footer-info flex flex-col justify-end">
           <p class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-400 leading-relaxed">
             Brain Dump Mode
@@ -149,8 +170,13 @@
             >
               25:00
             </button>
+            <!-- V3 Progress Bars -->
+            <div class="timer-track-wrapper">
+              <div id="ghost-progress" class="ghost-progress-bar"></div>
+              <div id="user-progress" class="user-progress-bar"></div>
+            </div>
           </div>
-          <div class="flex flex-row gap-4 mt-2 justify-start lg:justify-end w-full">
+          <div class="flex flex-row gap-4 mt-4 justify-start lg:justify-end w-full">
             <p id="timer-status" class="text-xs font-bold tracking-widest uppercase text-neutral-400">
               PAUSED
             </p>
@@ -292,6 +318,32 @@
     <div class="warp-title">Warp Detected</div>
     <div class="warp-desc">Focus diverter detected. Return to your task immediately.</div>
     <div class="text-xs uppercase tracking-widest text-white/50 mt-8">Focus will be penalised for long absence.</div>
+  </div>
+
+  <!-- 5. SETTINGS MODAL (v3) -->
+  <div id="settings-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 class="text-3xl font-black uppercase tracking-tighter mb-4">SETTINGS</h2>
+      <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-6">Configure Gemini API Key</p>
+      
+      <div class="mb-6">
+        <label for="api-key-input" class="block text-xs font-bold tracking-widest uppercase text-neutral-400 mb-2">Gemini API Key</label>
+        <input
+          id="api-key-input"
+          type="password"
+          class="w-full border-2 border-black p-3 text-sm focus:outline-none"
+          placeholder="AIZAsy..."
+        />
+        <p class="text-[10px] text-neutral-400 mt-2 leading-relaxed">
+          * Keys are stored safely on your browser (localStorage) and sent directly to Google Gemini API. Leave blank to use offline mock decomposition.
+        </p>
+      </div>
+
+      <div class="flex flex-row justify-end gap-4">
+        <button id="close-settings-btn" class="action-btn text-sm font-bold tracking-widest uppercase text-neutral-400">Cancel</button>
+        <button id="save-settings-btn" class="action-btn text-sm font-black tracking-widest uppercase text-black">Save Settings ➔</button>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
