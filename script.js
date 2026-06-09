@@ -238,7 +238,61 @@ function drawTree(canvas, type, tasks) {
   ctx.lineWidth = 6;
   ctx.stroke();
 
-  // Distribute tasks onto accumulated coordinates
+  // 1. Draw rich background foliage (leaves/petals/spikes) on ALL leaf coordinates to make the tree look lush
+  leafCoordinates.forEach((coord, idx) => {
+    const rSeed = seed + idx;
+    
+    ctx.save();
+    ctx.translate(coord.x, coord.y);
+    
+    if (type === 'apple') {
+      // Draw a cluster of 2-3 green leaves for thickness
+      const leavesCount = 2 + Math.floor(seededRandom(rSeed) * 2); // 2 or 3 leaves
+      for (let i = 0; i < leavesCount; i++) {
+        ctx.save();
+        const leafAngle = ((i - (leavesCount - 1) / 2) * 25 + (seededRandom(rSeed + i) - 0.5) * 15) * Math.PI / 180;
+        ctx.rotate(leafAngle);
+        ctx.beginPath();
+        ctx.ellipse(0, -4, 11, 6, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = '#556B2F'; // Rich organic olive green
+        ctx.fill();
+        ctx.strokeStyle = '#3E4F22';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else if (type === 'cherry') {
+      // Draw a rich cherry blossom petal cluster
+      const flowersCount = 2 + Math.floor(seededRandom(rSeed) * 2); // 2 or 3 small clusters
+      for (let i = 0; i < flowersCount; i++) {
+        ctx.save();
+        const offsetDist = seededRandom(rSeed + i) * 6;
+        const offsetAngle = seededRandom(rSeed + i * 2) * Math.PI * 2;
+        ctx.translate(Math.cos(offsetAngle) * offsetDist, Math.sin(offsetAngle) * offsetDist);
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(255, 192, 203, 0.8)'; // Cherry pink petals cluster
+        ctx.fill();
+        ctx.restore();
+      }
+    } else if (type === 'cactus') {
+      // Spiky cactus needles cluster
+      ctx.strokeStyle = '#D1D5DB';
+      ctx.lineWidth = 1.2;
+      const spikes = 3 + Math.floor(seededRandom(rSeed) * 3);
+      for (let i = 0; i < spikes; i++) {
+        const spikeAngle = ((i - (spikes - 1) / 2) * 25 + (seededRandom(rSeed + i) - 0.5) * 10) * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.sin(spikeAngle) * 9, -Math.cos(spikeAngle) * 9);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  });
+
+  // 2. Distribute tasks onto accumulated coordinates (drawn on top of background foliage)
   if (leafCoordinates.length > 0) {
     // Map tasks to endpoints
     const step = Math.floor(leafCoordinates.length / tasks.length) || 1;
