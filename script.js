@@ -19,6 +19,7 @@ const elements = {
   
   // Detail Screen
   backToGardenBtn: document.getElementById('back-to-garden-btn'),
+  editTreeNameBtn: document.getElementById('edit-tree-name-btn'),
   treeCanvas: document.getElementById('tree-canvas'),
   treeDetailName: document.getElementById('tree-detail-name'),
   treeDetailType: document.getElementById('tree-detail-type'),
@@ -539,6 +540,25 @@ function renderTreeDetail() {
   drawTree(elements.treeCanvas, tree.type, tree.tasks);
 }
 
+function editTreeName() {
+  const tree = state.trees.find(t => t.id === state.currentTreeId);
+  if (!tree) return;
+
+  const newName = prompt("木の名前を変更:", tree.name);
+  if (newName === null) return;
+
+  const trimmed = newName.trim();
+  if (!trimmed) {
+    alert("名前は空にできません。");
+    return;
+  }
+
+  tree.name = trimmed;
+  saveTrees();
+  elements.treeDetailName.textContent = tree.name;
+  playSynthSound();
+}
+
 function updateTaskStatus(taskId, newStatus) {
   const tree = state.trees.find(t => t.id === state.currentTreeId);
   if (!tree) return;
@@ -798,6 +818,8 @@ elements.confirmAddTreeBtn.addEventListener('click', confirmAddTree);
 elements.backToGardenBtn.addEventListener('click', () => {
   renderGarden();
 });
+
+elements.editTreeNameBtn.addEventListener('click', editTreeName);
 
 // Selector options in Add Tree Modal
 elements.optionCards.forEach(card => {

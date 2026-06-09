@@ -257,8 +257,32 @@ header {
 }
 
 @media (min-width: 1024px) {
+  #screen-tree-detail {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #screen-tree-detail main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .detail-layout {
     grid-template-columns: 1.2fr 1fr; /* Canvas left, tasks right */
+    height: calc(100vh - 73px); /* Fixed height matching space under header */
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .canvas-panel {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .tasks-panel {
+    height: 100%;
+    overflow-y: auto;
   }
 }
 
