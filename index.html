@@ -3,345 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MONO-FOCUS</title>
-  <!-- Swiss style typography: Inter google font -->
+  <title>Garden Focus / 課題の木</title>
+  <!-- Google Font Outfit & Inter for premium typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="h-full bg-white text-black selection:bg-black selection:text-white m-0 p-0 font-sans antialiased">
+<body class="h-full">
 
   <div class="h-full flex flex-col justify-between">
     
-    <!-- 1. BRAIN DUMP SCREEN -->
-    <section id="screen-dump" class="flex-1 flex flex-col justify-between p-8 md:p-16">
-      <header class="swiss-grid font-sans tracking-tight">
-        <div>
-          <h1 class="logo text-xl md:text-2xl font-black uppercase tracking-tighter leading-none">
-            MONO-FOCUS
-          </h1>
+    <!-- 1. GARDEN (HOME) SCREEN -->
+    <section id="screen-garden" class="flex-1 flex flex-col">
+      <header>
+        <div class="logo-group">
+          <span class="logo-icon">🌿</span>
+          <span class="logo-text" style="font-family: 'Outfit', sans-serif;">GARDEN FOCUS</span>
         </div>
-        <div class="text-right flex items-center justify-end gap-4">
+        <div class="flex items-center gap-4">
           <button id="open-settings-btn" class="settings-btn" title="Settings">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
-          <p class="phase-indicator text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase">
-            Phase 01 / Dump
-          </p>
+          <span class="phase-tag">The Garden</span>
         </div>
       </header>
 
-      <main class="flex-1 flex flex-col justify-center items-start my-auto w-full max-w-5xl">
-        <div class="w-full">
-          <input
-            id="dump-input"
-            type="text"
-            class="dump-input w-full bg-transparent border-none outline-none font-bold tracking-tighter text-black placeholder-neutral-200 uppercase p-0 m-0"
-            placeholder="WHAT IS NEXT?"
-            autocomplete="off"
-            autofocus
-          />
-        </div>
-        <!-- AI action area (v3) -->
-        <div class="flex flex-row items-center gap-4 mt-6">
-          <button id="ai-decompose-btn" class="action-btn text-xs font-bold tracking-widest uppercase hover:opacity-50 transition-opacity cursor-pointer border-none bg-transparent p-0 text-neutral-400">
-            🤖 AI DECOMPOSE TASK
-          </button>
-          <div id="ai-loading" class="ai-loading-container hidden">
-            <span class="spinner"></span>
-            <span>Decomposing...</span>
+      <main class="flex-1 overflow-y-auto">
+        <div class="garden-container">
+          <div class="garden-title-section">
+            <h2 class="garden-title" style="font-family: 'Outfit', sans-serif;">あなた専用のタスク庭園</h2>
+            <p class="garden-subtitle">課題を木として植え、進捗させて実や花を咲かせましょう。</p>
+          </div>
+          
+          <div id="tree-grid" class="tree-grid">
+            <!-- Dynamically populated tree cards -->
+            
+            <!-- Default "Add Tree" Card trigger -->
+            <div id="add-tree-trigger" class="add-tree-card">
+              <span class="add-tree-icon">➕</span>
+              <span class="add-tree-text">新しく木を植える</span>
+            </div>
           </div>
         </div>
       </main>
-
-      <!-- Grass Calendar Area (v3) -->
-      <div class="grass-container w-full max-w-5xl">
-        <h3 class="grass-title">Focus Calendar (Last 30 Days)</h3>
-        <div id="grass-grid" class="grass-grid">
-          <!-- Rendered dynamically by script.js -->
-        </div>
-      </div>
-
-      <footer class="swiss-grid font-sans tracking-tight mt-8">
-        <div class="footer-info flex flex-col justify-end">
-          <p class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-400 leading-relaxed">
-            Brain Dump Mode
-          </p>
-          <p class="text-xs md:text-sm font-medium text-neutral-400 mt-1">
-            Write one task and press Enter to stack. Keep stacking silently.
-          </p>
-        </div>
-        <div class="footer-action flex flex-col md:items-end justify-end">
-          <div id="start-focus-container" class="hidden">
-            <button
-              id="start-focus-btn"
-              class="action-btn text-left md:text-right text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer focus:outline-none border-none bg-transparent p-0"
-            >
-              Start Focus (<span id="stacked-count">0</span> Stacked) ➔
-            </button>
-          </div>
-          <p id="empty-stack-indicator" class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-300">
-            Stack is empty
-          </p>
-          <p class="text-neutral-400 text-xs mt-1 md:text-right">
-            Press Shift+Enter to quick-start focus.
-          </p>
-        </div>
-      </footer>
     </section>
 
-    <!-- 2. MONO FOCUS SCREEN -->
-    <section id="screen-focus" class="flex-1 flex flex-col justify-between p-8 md:p-16 hidden relative transition-all-custom">
+    <!-- 2. TREE DETAIL SCREEN -->
+    <section id="screen-tree-detail" class="flex-1 flex flex-col hidden">
+      <header>
+        <button id="back-to-garden-btn" class="text-button back-btn">
+          <span>⬅</span> 庭に戻る
+        </button>
+        <span class="phase-tag">Tree Detail</span>
+      </header>
+
+      <main class="flex-1">
+        <div class="detail-layout">
+          
+          <!-- Left Column: Tree Canvas Rendering -->
+          <div class="canvas-panel">
+            <div class="stats-overlay-top">
+              <span>進捗状況:</span>
+              <span id="tree-detail-progress-percent" class="stats-overlay-val">0%</span>
+              <span class="text-neutral-300">|</span>
+              <span id="tree-detail-progress-fraction" class="stats-overlay-val">0/0</span>
+            </div>
+            
+            <div class="canvas-wrapper">
+              <canvas id="tree-canvas" width="600" height="600"></canvas>
+            </div>
+          </div>
+
+          <!-- Right Column: Task Control Panel -->
+          <div class="tasks-panel">
+            <div class="panel-header">
+              <div>
+                <h2 id="tree-detail-name" class="panel-title" style="font-family: 'Outfit', sans-serif;">木の名前</h2>
+                <p id="tree-detail-type" class="panel-subtitle">木の種類: サクラ</p>
+              </div>
+            </div>
+
+            <!-- Add Task Form -->
+            <div class="input-form">
+              <input
+                id="task-input"
+                type="text"
+                class="organic-input"
+                placeholder="新しい葉（課題）を追加..."
+                autocomplete="off"
+              />
+              <button id="add-task-btn" class="btn-organic">
+                追加
+              </button>
+            </div>
+
+            <!-- Task List Area -->
+            <div id="tasks-list" class="tasks-list">
+              <!-- Dynamically populated tasks -->
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </section>
+
+  </div>
+
+  <!-- 3. ADD TREE MODAL -->
+  <div id="add-tree-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 class="modal-title" style="font-family: 'Outfit', sans-serif;">新しく木を植える</h2>
+      <p class="modal-desc">カテゴリーや科目名を決めて、植える木の種類を選んでください。</p>
       
-      <!-- Micro-step Action Launcher Overlay (v2) -->
-      <div id="launcher-overlay" class="launcher-overlay hidden">
-        <div class="max-w-2xl text-left flex flex-col items-start w-full">
-          <span class="micro-badge">ACTION LAUNCHER</span>
-          <h2 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-6">
-            HOW WILL YOU START?
-          </h2>
-          <p class="text-neutral-400 text-xs md:text-sm uppercase tracking-wider mb-8">
-            Target Task: <span id="launcher-task-text" class="font-bold text-black">TASK NAME</span>
-          </p>
-          <div class="flex flex-col md:flex-row gap-4 w-full">
-            <button
-              id="launch-micro-btn"
-              class="action-btn text-left text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer border-none bg-black text-white p-6 flex-1"
-            >
-              ➔ START WITH 2-MIN MICRO-STEP
-            </button>
-            <button
-              id="launch-full-btn"
-              class="action-btn text-left text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer border-2 border-black bg-transparent text-black p-6 flex-1"
-            >
-              ➔ START FULL SESSION (25-MIN)
-            </button>
-          </div>
-          <p class="text-neutral-400 text-xs mt-6 uppercase">
-            * Micro-step triggers automatic full session afterwards. Reduces start friction.
-          </p>
+      <div class="mb-6" style="margin-bottom: 1.5rem;">
+        <label for="tree-name-input" class="block text-xs font-bold tracking-widest uppercase text-neutral-400 mb-2" style="margin-bottom: 0.5rem; display: block;">木の名前（例: 数学の宿題, 読書）</label>
+        <input
+          id="tree-name-input"
+          type="text"
+          class="organic-input w-full"
+          placeholder="木の名前を入力..."
+          style="width: 100%;"
+        />
+      </div>
+
+      <label class="block text-xs font-bold tracking-widest uppercase text-neutral-400 mb-2" style="margin-bottom: 0.5rem; display: block;">木の種類</label>
+      <div class="options-grid">
+        <div class="option-card selected" data-type="apple">
+          <span class="option-icon">🍎</span>
+          <span class="option-label">リンゴ</span>
+        </div>
+        <div class="option-card" data-type="cherry">
+          <span class="option-icon">🌸</span>
+          <span class="option-label">桜</span>
+        </div>
+        <div class="option-card" data-type="cactus">
+          <span class="option-icon">🌵</span>
+          <span class="option-label">サボテン</span>
         </div>
       </div>
 
-      <header class="swiss-grid font-sans tracking-tight">
-        <div>
-          <button
-            id="back-to-dump-btn"
-            class="logo text-xs md:text-sm font-bold tracking-widest uppercase hover:opacity-50 transition-opacity focus:outline-none cursor-pointer border-none bg-transparent p-0 text-black"
-          >
-            ➔ MONO-FOCUS
-          </button>
-        </div>
-        <div class="text-right flex flex-col items-end gap-1">
-          <p class="phase-indicator text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase">
-            Phase 02 / Focus
-          </p>
-          <div class="flex flex-wrap gap-2 mt-1">
-            <span id="active-micro-badge" class="micro-badge hidden m-0">MICRO-STEP MODE</span>
-            <span id="warp-counter-tag" class="warp-tag hidden m-0">WARPS: <span id="warp-count-val">0</span></span>
-          </div>
-        </div>
-      </header>
-
-      <main class="flex-1 grid-focus items-center my-auto w-full max-w-7xl">
-        <!-- Left Side: Task Text -->
-        <div class="task-container flex flex-col justify-center min-h-[300px]">
-          <p class="text-xs md:text-sm font-bold tracking-widest text-neutral-400 uppercase mb-4">
-            CURRENT TARGET
-          </p>
-          <div id="active-task-wrapper">
-            <h2 id="active-task-text" class="task-title font-black uppercase tracking-tighter leading-none break-words">
-              TASK TEXT HERE
-            </h2>
-          </div>
-        </div>
-
-        <!-- Right Side: Timer -->
-        <div class="timer-container flex flex-col items-start lg:items-end justify-center">
-          <p class="text-xs md:text-sm font-bold tracking-widest text-neutral-400 uppercase mb-2 lg:text-right w-full">
-            TIME REMAINING
-          </p>
-          <div class="w-full lg:text-right">
-            <button
-              id="timer-btn"
-              class="timer-display font-light tracking-tighter tabular-nums hover:opacity-60 transition-opacity focus:outline-none cursor-pointer select-none leading-none -ml-2 lg:ml-0 border-none bg-transparent p-0 text-black"
-              title="Click to Pause/Play (Spacebar)"
-            >
-              25:00
-            </button>
-            <!-- V3 Progress Bars -->
-            <div class="timer-track-wrapper">
-              <div id="ghost-progress" class="ghost-progress-bar"></div>
-              <div id="user-progress" class="user-progress-bar"></div>
-            </div>
-          </div>
-          <div class="flex flex-row gap-4 mt-4 justify-start lg:justify-end w-full">
-            <p id="timer-status" class="text-xs font-bold tracking-widest uppercase text-neutral-400">
-              PAUSED
-            </p>
-            <span class="text-neutral-300 text-xs">•</span>
-            <button
-              id="reset-timer-btn"
-              class="text-xs font-bold tracking-widest uppercase hover:opacity-50 cursor-pointer focus:outline-none text-neutral-400 border-none bg-transparent p-0"
-            >
-              RESET TIMER
-            </button>
-          </div>
-        </div>
-      </main>
-
-      <footer class="swiss-grid font-sans tracking-tight pt-8 border-t-0">
-        <div class="footer-info flex flex-col justify-end">
-          <p class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-400">
-            Task Queue
-          </p>
-          <p class="text-xs md:text-sm font-medium text-neutral-400 mt-1">
-            <span id="queue-count">0</span> task<span id="queue-plural">s</span> remaining in queue. No distraction allowed.
-          </p>
-        </div>
-        <div class="footer-action flex flex-row md:justify-end items-end gap-12">
-          <button
-            id="skip-task-btn"
-            class="action-btn text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer focus:outline-none border-none bg-transparent p-0"
-          >
-            SKIP ➔
-          </button>
-          <button
-            id="complete-task-btn"
-            class="action-btn text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer focus:outline-none border-none bg-transparent p-0"
-          >
-            COMPLETE ✔
-          </button>
-        </div>
-      </footer>
-    </section>
-
-    <!-- 3. SUMMARY SCREEN -->
-    <section id="screen-summary" class="flex-1 flex flex-col justify-between p-8 md:p-16 hidden">
-      <header class="swiss-grid font-sans tracking-tight">
-        <div>
-          <h1 class="logo text-xl md:text-2xl font-black uppercase tracking-tighter leading-none">
-            MONO-FOCUS
-          </h1>
-        </div>
-        <div class="text-right">
-          <p class="phase-indicator text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase">
-            Phase 03 / Summary
-          </p>
-        </div>
-      </header>
-
-      <main class="flex-1 flex flex-col justify-center my-auto w-full max-w-5xl py-12 md:py-16">
-        <!-- V2 Focus Metrics Stats Bar -->
-        <div class="metrics-grid mb-12 border-b border-neutral-100 pb-8" style="border-bottom: 1px solid #f3f3f3; padding-bottom: 2rem; margin-bottom: 2rem;">
-          <div>
-            <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">Focus Efficiency</p>
-            <p id="stat-efficiency" class="text-3xl md:text-5xl font-black tracking-tighter">100%</p>
-          </div>
-          <div>
-            <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">Warp Incidents</p>
-            <p id="stat-warps" class="text-3xl md:text-5xl font-black tracking-tighter text-swiss-red">00</p>
-          </div>
-          <div>
-            <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">Completed Tasks</p>
-            <p id="stat-completed" class="text-3xl md:text-5xl font-black tracking-tighter">00</p>
-          </div>
-          <div>
-            <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">Total Focus Time</p>
-            <p id="stat-time" class="text-3xl md:text-5xl font-black tracking-tighter">00:00</p>
-          </div>
-        </div>
-
-        <div class="swiss-grid gap-12 md:gap-16 w-full">
-          <!-- Completed column -->
-          <div class="flex flex-col justify-start">
-            <p class="text-xs md:text-sm font-bold tracking-widest text-neutral-400 uppercase mb-2">
-              SUCCESS RATE
-            </p>
-            <div class="flex items-baseline gap-2">
-              <span id="summary-completed-count" class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter tabular-nums leading-none">
-                00
-              </span>
-              <span class="text-xl md:text-2xl font-bold text-neutral-400">/ COMPLETED</span>
-            </div>
-            <div id="summary-completed-list" class="mt-8 space-y-3">
-              <!-- JS Injected List -->
-            </div>
-          </div>
-
-          <!-- Skipped column -->
-          <div class="flex flex-col justify-start">
-            <p class="text-xs md:text-sm font-bold tracking-widest text-neutral-400 uppercase mb-2">
-              SKIPPED TARGETS
-            </p>
-            <div class="flex items-baseline gap-2">
-              <span id="summary-skipped-count" class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter tabular-nums leading-none text-neutral-300">
-                00
-              </span>
-              <span class="text-xl md:text-2xl font-bold text-neutral-400">/ SKIPPED</span>
-            </div>
-            <div id="summary-skipped-list" class="mt-8 space-y-3">
-              <!-- JS Injected List -->
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <footer class="swiss-grid font-sans tracking-tight">
-        <div class="footer-info flex flex-col justify-end">
-          <p class="text-xs md:text-sm font-bold tracking-widest uppercase text-neutral-400">
-            Focus Session Concluded
-          </p>
-          <p class="text-xs md:text-sm font-medium text-neutral-400 mt-1">
-            Your mind is empty and focused. Ready for the next run.
-          </p>
-        </div>
-        <div class="footer-action flex flex-col md:items-end justify-end">
-          <button
-            id="restart-session-btn"
-            class="action-btn text-left md:text-right text-xl md:text-2xl font-black uppercase tracking-tighter hover:opacity-50 transition-opacity cursor-pointer focus:outline-none border-none bg-transparent p-0"
-          >
-            Start New Session ➔
-          </button>
-          <p class="text-neutral-400 text-xs mt-1 md:text-right">
-            Clears all completed tasks and restarts dump.
-          </p>
-        </div>
-      </footer>
-    </section>
-
+      <div class="flex justify-end gap-4" style="display: flex; justify-content: flex-end; gap: 1rem;">
+        <button id="cancel-add-tree-btn" class="text-button">キャンセル</button>
+        <button id="confirm-add-tree-btn" class="btn-organic">木を植える ➔</button>
+      </div>
+    </div>
   </div>
 
-  <!-- 4. WARP SHIELD ALERT OVERLAY (v2) -->
-  <div id="warp-overlay" class="hidden">
-    <div class="warp-title">Warp Detected</div>
-    <div class="warp-desc">Focus diverter detected. Return to your task immediately.</div>
-    <div class="text-xs uppercase tracking-widest text-white/50 mt-8">Focus will be penalised for long absence.</div>
-  </div>
-
-  <!-- 5. SETTINGS MODAL (v3) -->
+  <!-- 4. SETTINGS MODAL (Gemini API Config) -->
   <div id="settings-modal" class="modal-overlay hidden">
     <div class="modal-content">
-      <h2 class="text-3xl font-black uppercase tracking-tighter mb-4">SETTINGS</h2>
-      <p class="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-6">Configure Gemini API Key</p>
+      <h2 class="modal-title" style="font-family: 'Outfit', sans-serif;">設定</h2>
+      <p class="modal-desc">Gemini APIキーを設定して、AIによるタスクの自動小分け機能を利用できます。</p>
       
-      <div class="mb-6">
-        <label for="api-key-input" class="block text-xs font-bold tracking-widest uppercase text-neutral-400 mb-2">Gemini API Key</label>
+      <div class="mb-6" style="margin-bottom: 1.5rem;">
+        <label for="api-key-input" class="block text-xs font-bold tracking-widest uppercase text-neutral-400 mb-2" style="margin-bottom: 0.5rem; display: block;">Gemini API Key</label>
         <input
           id="api-key-input"
           type="password"
-          class="w-full border-2 border-black p-3 text-sm focus:outline-none"
+          class="organic-input w-full"
           placeholder="AIZAsy..."
+          style="width: 100%;"
         />
-        <p class="text-[10px] text-neutral-400 mt-2 leading-relaxed">
-          * Keys are stored safely on your browser (localStorage) and sent directly to Google Gemini API. Leave blank to use offline mock decomposition.
+        <p class="text-[10px] text-neutral-400 mt-2 leading-relaxed" style="margin-top: 0.5rem; font-size: 0.65rem;">
+          * キーは暗号化されずブラウザのローカル（localStorage）にのみ安全に保存され、直接Google APIとの通信に使用されます。空欄にすると、オフライン用の疑似分解エンジンが起動します。
         </p>
       </div>
 
-      <div class="flex flex-row justify-end gap-4">
-        <button id="close-settings-btn" class="action-btn text-sm font-bold tracking-widest uppercase text-neutral-400">Cancel</button>
-        <button id="save-settings-btn" class="action-btn text-sm font-black tracking-widest uppercase text-black">Save Settings ➔</button>
+      <div class="flex justify-end gap-4" style="display: flex; justify-content: flex-end; gap: 1rem;">
+        <button id="close-settings-btn" class="text-button">閉じる</button>
+        <button id="save-settings-btn" class="btn-organic">保存する</button>
       </div>
     </div>
   </div>
