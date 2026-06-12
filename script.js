@@ -53,6 +53,11 @@ const elements = {
   basketList: document.getElementById('basket-list')
 };
 
+// Particle Animation Variables for Task Completion (v4)
+let activeParticles = [];
+let particleAnimationId = null;
+let lastTreeCoordinates = []; // To find leaf coordinates for particle spawning
+
 // Ensure we have at least one tree in the garden by default
 if (state.trees.length === 0) {
   state.trees.push({
@@ -250,13 +255,29 @@ function drawTree(canvas, type, tasks) {
     return;
   }
 
-  // Determine complexity based on tasks count
-  // Depth of branches
-  let maxDepth = 4;
-  if (tasks.length > 15) maxDepth = 6;
-  else if (tasks.length > 7) maxDepth = 5;
+  // Determine complexity based on tasks count (70% scaled thresholds)
+  let maxDepth = 3; // sapling default
+  let sizeFactor = 0;
+
+  if (tasks.length === 1) {
+    maxDepth = 3; // Sapling (深さ3)
+    sizeFactor = 15;
+  } else if (tasks.length === 2) {
+    maxDepth = 4; // Small Tree (深さ4)
+    sizeFactor = 30;
+  } else if (tasks.length >= 3 && tasks.length <= 5) {
+    maxDepth = 5; // Medium Tree (深さ5)
+    sizeFactor = 50;
+  } else if (tasks.length >= 6 && tasks.length <= 10) {
+    maxDepth = 6; // Lush Tree (深さ6)
+    sizeFactor = 70;
+  } else {
+    maxDepth = 7; // Grand Tree (11個以上, 深さ7)
+    sizeFactor = 90;
+  }
 
   const leafCoordinates = [];
+  const innerBranchCoordinates = [];
 
   // Setup styles by type
   let branchColor = '#5C4033'; // Deep organic brown
@@ -280,6 +301,9 @@ function drawTree(canvas, type, tasks) {
     // If near leaf nodes (depth <= 1), save coordinates to multiply leaves density
     if (depth <= 1) {
       leafCoordinates.push({ x: x2, y: y2, angle: angle });
+    }
+    if (depth > 1 && depth <= 3) {
+      innerBranchCoordinates.push({ x: x2, y: y2, angle: angle });
     }
 
     if (depth === 0) return;
@@ -305,8 +329,8 @@ function drawTree(canvas, type, tasks) {
   const startY = height - 60;
   const initialAngle = -90; // Upwards
   
-  let initialLength = 80 + Math.min(tasks.length * 5, 50);
-  let initialWidth = 9 + Math.min(tasks.length * 0.8, 14);
+  let initialLength = 90 + sizeFactor;
+  let initialWidth = 4 + (maxDepth * 1.5);
 
   if (type === 'cactus') {
     initialLength = 95;
@@ -376,6 +400,37 @@ function drawTree(canvas, type, tasks) {
     ctx.restore();
   });
 
+  // 1.5. Draw slightly smaller foliage on INNER branches to fill the center space (eliminate sparseness) (v4)
+  innerBranchCoordinates.forEach((coord, idx) => {
+    const rSeed = seed + idx * 3;
+    if (seededRandom(rSeed) > 0.45) return;
+
+    ctx.save();
+    ctx.translate(coord.x, coord.y);
+
+    if (type === 'apple') {
+      ctx.save();
+      const leafAngle = (seededRandom(rSeed) - 0.5) * 60 * Math.PI / 180;
+      ctx.rotate(leafAngle);
+      ctx.beginPath();
+      ctx.ellipse(0, -3, 9, 5, 0, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(85, 107, 47, 0.75)';
+      ctx.fill();
+      ctx.restore();
+    } else if (type === 'cherry') {
+      ctx.beginPath();
+      ctx.arc(0, 0, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(255, 192, 203, 0.6)';
+      ctx.fill();
+    } else if (type === 'cactus') {
+      ctx.fillStyle = 'rgba(46, 90, 39, 0.8)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    ctx.restore();
+  });
+
   // 2. Distribute tasks onto accumulated coordinates (drawn on top of background foliage)
   if (leafCoordinates.length > 0) {
     // Map tasks to endpoints
@@ -391,6 +446,9 @@ function drawTree(canvas, type, tasks) {
       }
     });
   }
+
+  // Save computed leaf coordinates to find spawn points for done animation
+  lastTreeCoordinates = leafCoordinates;
 }
 
 // Draw leaf, bud, or flower/fruit depending on status
@@ -438,80 +496,118 @@ function drawLeafOrnament(ctx, x, y, type, status) {
   } 
   
   else if (status === 'done') {
-    // 3. DONE: Bloom / Fruit
+    // 3. DONE: Bloom / Fruit (Twin / Multi-layered for high achievement)
     if (type === 'apple') {
-      // Draw Apple Fruit
+      // Draw Twin Apples (small and delicate, hanging side-by-side)
+      ctx.save();
+      // Left Apple
       ctx.beginPath();
-      // Left cheek
-      ctx.arc(x - 4, y, 8, 0, 2 * Math.PI);
-      // Right cheek
-      ctx.arc(x + 4, y, 8, 0, 2 * Math.PI);
+      ctx.arc(x - 5, y + 4, 6, 0, 2 * Math.PI);
       ctx.fillStyle = '#FF3B30'; // Apple red
       ctx.fill();
+      
+      // Right Apple
+      ctx.beginPath();
+      ctx.arc(x + 5, y + 4, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = '#FF453A'; // Slightly lighter red
+      ctx.fill();
 
-      // Stem of apple
+      // Stem of apples (Y-shaped)
       ctx.beginPath();
       ctx.moveTo(x, y - 4);
-      ctx.quadraticCurveTo(x + 3, y - 10, x + 5, y - 11);
+      ctx.lineTo(x - 5, y + 4);
+      ctx.moveTo(x, y - 4);
+      ctx.lineTo(x + 5, y + 4);
       ctx.strokeStyle = '#5C4033';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Small green leaf on apple stem
+      // Tiny green leaf
       ctx.beginPath();
-      ctx.ellipse(x + 4, y - 10, 3, 1.5, Math.PI / 4, 0, 2 * Math.PI);
+      ctx.ellipse(x + 3, y - 4, 3, 1.5, Math.PI / 4, 0, 2 * Math.PI);
       ctx.fillStyle = '#556B2F';
       ctx.fill();
+      ctx.restore();
     } 
     
     else if (type === 'cherry') {
-      // Draw Cherry Blossom Flower (5 petals)
-      const numPetals = 5;
-      const radius = 9;
-      
+      // Draw Twin Cherries (fruit instead of flower for better completion impact)
+      ctx.save();
+      // Left Cherry
       ctx.beginPath();
-      ctx.fillStyle = '#FFC0CB'; // Cherry pink
-      
-      for (let i = 0; i < numPetals; i++) {
-        const angle = (i * 2 * Math.PI) / numPetals;
-        const petalX = x + Math.cos(angle) * radius * 0.7;
-        const petalY = y + Math.sin(angle) * radius * 0.7;
-        ctx.arc(petalX, petalY, radius * 0.5, 0, 2 * Math.PI);
-      }
+      ctx.arc(x - 6, y + 6, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#D90429'; // Deep cherry red
+      ctx.fill();
+      // Shine
+      ctx.beginPath();
+      ctx.arc(x - 4, y + 4, 1.2, 0, 2 * Math.PI);
+      ctx.fillStyle = '#FFFFFF';
       ctx.fill();
 
-      // Flower Center
+      // Right Cherry
       ctx.beginPath();
-      ctx.arc(x, y, 3, 0, 2 * Math.PI);
-      ctx.fillStyle = '#FFFDD0'; // Cream white center
+      ctx.arc(x + 6, y + 6, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#EF233C'; // Bright cherry red
       ctx.fill();
-      ctx.strokeStyle = '#FF69B4';
-      ctx.lineWidth = 0.5;
+      // Shine
+      ctx.beginPath();
+      ctx.arc(x + 8, y + 4, 1.2, 0, 2 * Math.PI);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+
+      // Green Y-shaped Stem
+      ctx.beginPath();
+      ctx.moveTo(x, y - 2);
+      ctx.lineTo(x - 6, y + 6);
+      ctx.moveTo(x, y - 2);
+      ctx.lineTo(x + 6, y + 6);
+      ctx.strokeStyle = '#2D6A4F';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
+      ctx.restore();
     } 
     
     else if (type === 'cactus') {
-      // Draw Golden Spiky Cactus Flower
+      // Draw Multi-layered spiky golden flower next to a purple fruit
+      ctx.save();
+      // Draw small purple fruit base first
       ctx.beginPath();
-      ctx.fillStyle = '#FF8C00'; // Dark orange base
-      ctx.arc(x, y, 6, 0, 2 * Math.PI);
+      ctx.arc(x - 4, y + 4, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#7209B7'; // Rich purple
       ctx.fill();
 
-      // Flower Petals
-      ctx.strokeStyle = '#FFD700'; // Gold tips
-      ctx.lineWidth = 1.5;
+      // Draw Flower base offset
+      const fx = x + 3;
+      const fy = y - 2;
+
+      // Layer 1: Outer Orange Spikes
+      ctx.strokeStyle = '#FF8C00';
+      ctx.lineWidth = 2;
       for (let i = 0; i < 8; i++) {
         const angle = (i * Math.PI) / 4;
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + Math.cos(angle) * 11, y + Math.sin(angle) * 11);
+        ctx.moveTo(fx, fy);
+        ctx.lineTo(fx + Math.cos(angle) * 11, fy + Math.sin(angle) * 11);
         ctx.stroke();
       }
 
+      // Layer 2: Inner Yellow Spikes
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 1.3;
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3 + Math.PI / 6;
+        ctx.beginPath();
+        ctx.moveTo(fx, fy);
+        ctx.lineTo(fx + Math.cos(angle) * 7, fy + Math.sin(angle) * 7);
+        ctx.stroke();
+      }
+
+      // Center White Dot
       ctx.beginPath();
-      ctx.arc(x, y, 3, 0, 2 * Math.PI);
-      ctx.fillStyle = '#FFFF00'; // Yellow center
+      ctx.arc(fx, fy, 2.5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#FFFFFF';
       ctx.fill();
+      ctx.restore();
     }
   }
 }
@@ -725,6 +821,17 @@ function updateTaskStatus(taskId, newStatus) {
     // Play sweet synth chime sound on done
     if (isDoneTransition) {
       playSynthSound('success');
+      
+      // Spawn organic falling petals particles from the task node coordinate (v4)
+      const idx = tree.tasks.findIndex(t => t.id === taskId);
+      if (idx !== -1 && lastTreeCoordinates.length > 0) {
+        const step = Math.floor(lastTreeCoordinates.length / tree.tasks.length) || 1;
+        const coordIdx = Math.min((idx * step) % lastTreeCoordinates.length, lastTreeCoordinates.length - 1);
+        const coord = lastTreeCoordinates[coordIdx];
+        if (coord) {
+          spawnParticles(coord.x, coord.y, tree.type);
+        }
+      }
     } else {
       playSynthSound(); // short tick
     }
@@ -1066,6 +1173,81 @@ function renderBasketList() {
 
     elements.basketList.appendChild(item);
   });
+}
+
+// ----------------------------------------------------
+// PARTY PARTICLES ANIMATION (v4)
+// ----------------------------------------------------
+
+function spawnParticles(x, y, treeType) {
+  activeParticles = [];
+  let petalColor = '#FFC0CB'; // Pink cherry blossom petals
+  if (treeType === 'apple') {
+    petalColor = '#8FBC8F'; // Pale organic green leaves
+  } else if (treeType === 'cactus') {
+    petalColor = '#FFD700'; // Gold sparkles
+  }
+
+  // Spawn 22 little particles
+  for (let i = 0; i < 22; i++) {
+    activeParticles.push({
+      x: x,
+      y: y,
+      vx: (Math.random() - 0.5) * 3.5,
+      vy: Math.random() * -2.5 - 0.8, // Pop slightly upwards first, then fall
+      gravity: 0.08,
+      alpha: 1.0,
+      size: 4 + Math.random() * 5,
+      rotation: Math.random() * Math.PI * 2,
+      vRotation: (Math.random() - 0.5) * 0.08,
+      color: petalColor
+    });
+  }
+
+  if (particleAnimationId) cancelAnimationFrame(particleAnimationId);
+  animateParticles();
+}
+
+function animateParticles() {
+  const canvas = elements.treeCanvas;
+  const ctx = canvas.getContext('2d');
+  const tree = state.trees.find(t => t.id === state.currentTreeId);
+  if (!tree) return;
+
+  // Redraw the main tree to clear previous animation frame
+  drawTree(canvas, tree.type, tree.tasks);
+
+  let anyAlive = false;
+
+  activeParticles.forEach(p => {
+    // Apply gravity
+    p.vy += p.gravity;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.alpha -= 0.015; // Fade out slowly
+    p.rotation += p.vRotation;
+
+    if (p.alpha > 0) {
+      anyAlive = true;
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+
+      ctx.beginPath();
+      // Draw organic petal-like shape
+      ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.restore();
+    }
+  });
+
+  if (anyAlive) {
+    particleAnimationId = requestAnimationFrame(animateParticles);
+  } else {
+    particleAnimationId = null;
+  }
 }
 
 // ----------------------------------------------------
