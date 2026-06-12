@@ -4,7 +4,8 @@ const state = {
   trees: JSON.parse(localStorage.getItem('garden_focus_trees')) || [],
   currentTreeId: null,
   geminiApiKey: localStorage.getItem('gemini_api_key') || '',
-  selectedTreeType: 'apple' // For the "Add Tree" Modal
+  selectedTreeType: 'apple', // For the "Add Tree" Modal
+  coins: parseInt(localStorage.getItem('garden_focus_coins')) || 0
 };
 
 // DOM Elements
@@ -18,6 +19,7 @@ const elements = {
   openSettingsBtn: document.getElementById('open-settings-btn'),
   todayHarvestCount: document.getElementById('today-harvest-count'),
   openBasketBtn: document.getElementById('open-basket-btn'),
+  coinCount: document.getElementById('coin-count'),
   
   // Detail Screen
   backToGardenBtn: document.getElementById('back-to-garden-btn'),
@@ -68,6 +70,12 @@ if (state.trees.length === 0) {
 
 function saveTrees() {
   localStorage.setItem('garden_focus_trees', JSON.stringify(state.trees));
+}
+
+function updateCoinCount() {
+  if (elements.coinCount) {
+    elements.coinCount.textContent = state.coins.toLocaleString();
+  }
 }
 
 // Play synth sound using Web Audio API
@@ -175,6 +183,68 @@ function drawTree(canvas, type, tasks) {
   
   ctx.clearRect(0, 0, width, height);
 
+  let seed = 12345; // Fixed seed for stable look
+
+  // 0. DRAW BEAUTIFUL LUSH BACKDROP
+  // Sky Gradient
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
+  skyGrad.addColorStop(0, '#EAE2D5'); // Soft warm tea sky
+  skyGrad.addColorStop(0.7, '#FAF6F0'); // Pure linen cream sky bottom
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  // Soft Background Hills
+  ctx.fillStyle = '#E8DFD0'; // Distant hill
+  ctx.beginPath();
+  ctx.arc(width * 0.25, height - 20, 180, Math.PI, 0, false);
+  ctx.fill();
+
+  ctx.fillStyle = '#E3D5CA'; // Mid hill
+  ctx.beginPath();
+  ctx.arc(width * 0.75, height - 10, 160, Math.PI, 0, false);
+  ctx.fill();
+
+  // Soil/Ground area
+  const soilGrad = ctx.createLinearGradient(0, height - 60, 0, height);
+  soilGrad.addColorStop(0, '#C6AC93'); // Warm earth soil line
+  soilGrad.addColorStop(1, '#9C846C'); // Deep soil
+  ctx.fillStyle = soilGrad;
+  ctx.fillRect(0, height - 60, width, 60);
+
+  // Tiny Grass & Flowers on the ground (lush decor)
+  for (let i = 0; i < width; i += 12) {
+    const grassHeight = 6 + seededRandom(seed++) * 10;
+    ctx.beginPath();
+    ctx.moveTo(i, height - 60);
+    ctx.lineTo(i + 4, height - 60 - grassHeight);
+    ctx.lineTo(i + 8, height - 60);
+    ctx.fillStyle = seededRandom(seed++) > 0.4 ? '#8FBC8F' : '#6B8E23';
+    ctx.fill();
+  }
+
+  // Draw little field flowers
+  const fieldFlowerColors = ['#FFC0CB', '#FCE7F3', '#FEF3C7', '#FFE4E1'];
+  for (let i = 0; i < 7; i++) {
+    const fx = 25 + seededRandom(seed++) * (width - 50);
+    const fy = height - 60 - seededRandom(seed++) * 6;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = fieldFlowerColors[Math.floor(seededRandom(seed++) * fieldFlowerColors.length)];
+    ctx.fill();
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(fx, fy, 1.5, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FFFFE0';
+    ctx.fill();
+    // Stem
+    ctx.beginPath();
+    ctx.moveTo(fx, fy + 3);
+    ctx.lineTo(fx, height - 60);
+    ctx.strokeStyle = '#556B2F';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
   if (tasks.length === 0) {
     drawSprout(ctx, width / 2, height - 60);
     return;
@@ -193,9 +263,7 @@ function drawTree(canvas, type, tasks) {
   if (type === 'cherry') branchColor = '#4A3C31';
   if (type === 'cactus') branchColor = '#2E5A27'; // Cactus body color
 
-  let seed = 12345; // Fixed seed for stable look
-
-  // Recursive branch generator
+  // Recursive branch generator (with 3-way splits for volume)
   function branch(x1, y1, angle, depth, currentLength, currentWidth) {
     const x2 = x1 + Math.cos(angle * Math.PI / 180) * currentLength;
     const y2 = y1 + Math.sin(angle * Math.PI / 180) * currentLength;
@@ -209,20 +277,27 @@ function drawTree(canvas, type, tasks) {
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // If leaf node, save coordinates for task allocation
-    if (depth === 0) {
+    // If near leaf nodes (depth <= 1), save coordinates to multiply leaves density
+    if (depth <= 1) {
       leafCoordinates.push({ x: x2, y: y2, angle: angle });
-      return;
     }
 
+    if (depth === 0) return;
+
     // Branch parameters w/ deterministic randomness
-    const randAngleSpread = 20 + seededRandom(seed++) * 18;
-    const lengthShrink = 0.7 + seededRandom(seed++) * 0.12;
+    const randAngleSpread = 22 + seededRandom(seed++) * 15;
+    const lengthShrink = 0.72 + seededRandom(seed++) * 0.1;
     const widthShrink = 0.68 + seededRandom(seed++) * 0.05;
 
-    // Branches left and right
+    // Left and Right branches
     branch(x2, y2, angle - randAngleSpread, depth - 1, currentLength * lengthShrink, currentWidth * widthShrink);
     branch(x2, y2, angle + randAngleSpread, depth - 1, currentLength * lengthShrink, currentWidth * widthShrink);
+
+    // 38% chance to grow a third center/minor branch for a very lush volume
+    if (depth > 1 && seededRandom(seed++) < 0.38) {
+      const centerAngle = angle + (seededRandom(seed++) - 0.5) * 12;
+      branch(x2, y2, centerAngle, depth - 1, currentLength * lengthShrink * 0.85, currentWidth * widthShrink * 0.8);
+    }
   }
 
   // Start trunk variables
@@ -231,23 +306,15 @@ function drawTree(canvas, type, tasks) {
   const initialAngle = -90; // Upwards
   
   let initialLength = 80 + Math.min(tasks.length * 5, 50);
-  let initialWidth = 8 + Math.min(tasks.length * 0.8, 14);
+  let initialWidth = 9 + Math.min(tasks.length * 0.8, 14);
 
   if (type === 'cactus') {
     initialLength = 95;
-    initialWidth = 24;
+    initialWidth = 26;
   }
 
   // Draw wood structure
   branch(startX, startY, initialAngle, maxDepth, initialLength, initialWidth);
-
-  // Soil/Ground line
-  ctx.beginPath();
-  ctx.moveTo(0, height - 60);
-  ctx.lineTo(width, height - 60);
-  ctx.strokeStyle = '#D2B48C'; // Earth tone soil line
-  ctx.lineWidth = 6;
-  ctx.stroke();
 
   // 1. Draw rich background foliage (leaves/petals/spikes) on ALL leaf coordinates to make the tree look lush
   leafCoordinates.forEach((coord, idx) => {
@@ -257,15 +324,16 @@ function drawTree(canvas, type, tasks) {
     ctx.translate(coord.x, coord.y);
     
     if (type === 'apple') {
-      // Draw a cluster of 2-3 green leaves for thickness
-      const leavesCount = 2 + Math.floor(seededRandom(rSeed) * 2); // 2 or 3 leaves
+      // Draw a dense cluster of 3-4 green leaves for thickness
+      const leavesCount = 3 + Math.floor(seededRandom(rSeed) * 2); // 3 or 4 leaves
+      const leafColorPalette = ['#556B2F', '#6B8E23', '#4A5D29']; // Mix of organic greens
       for (let i = 0; i < leavesCount; i++) {
         ctx.save();
-        const leafAngle = ((i - (leavesCount - 1) / 2) * 25 + (seededRandom(rSeed + i) - 0.5) * 15) * Math.PI / 180;
+        const leafAngle = ((i - (leavesCount - 1) / 2) * 22 + (seededRandom(rSeed + i) - 0.5) * 15) * Math.PI / 180;
         ctx.rotate(leafAngle);
         ctx.beginPath();
-        ctx.ellipse(0, -4, 11, 6, 0, 0, 2 * Math.PI);
-        ctx.fillStyle = '#556B2F'; // Rich organic olive green
+        ctx.ellipse(0, -5, 13, 7, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = leafColorPalette[Math.floor(seededRandom(rSeed + i * 2) * leafColorPalette.length)];
         ctx.fill();
         ctx.strokeStyle = '#3E4F22';
         ctx.lineWidth = 0.8;
@@ -273,30 +341,35 @@ function drawTree(canvas, type, tasks) {
         ctx.restore();
       }
     } else if (type === 'cherry') {
-      // Draw a rich cherry blossom petal cluster
-      const flowersCount = 2 + Math.floor(seededRandom(rSeed) * 2); // 2 or 3 small clusters
+      // Draw a very rich cherry blossom petal cluster (fluffy blooming sakura)
+      const flowersCount = 3 + Math.floor(seededRandom(rSeed) * 3); // 3 to 5 small petals
       for (let i = 0; i < flowersCount; i++) {
         ctx.save();
-        const offsetDist = seededRandom(rSeed + i) * 6;
+        const offsetDist = seededRandom(rSeed + i) * 8;
         const offsetAngle = seededRandom(rSeed + i * 2) * Math.PI * 2;
         ctx.translate(Math.cos(offsetAngle) * offsetDist, Math.sin(offsetAngle) * offsetDist);
         
         ctx.beginPath();
-        ctx.arc(0, 0, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = 'rgba(255, 192, 203, 0.8)'; // Cherry pink petals cluster
+        ctx.arc(0, 0, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = seededRandom(rSeed + i) > 0.4 ? 'rgba(255, 192, 203, 0.85)' : 'rgba(255, 182, 193, 0.9)'; // Variation of pink
         ctx.fill();
         ctx.restore();
       }
     } else if (type === 'cactus') {
-      // Spiky cactus needles cluster
-      ctx.strokeStyle = '#D1D5DB';
-      ctx.lineWidth = 1.2;
-      const spikes = 3 + Math.floor(seededRandom(rSeed) * 3);
+      // Spiky cactus needles cluster + little round side cactus bumps
+      ctx.fillStyle = '#2E5A27'; // Dark green cactus stem bump
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1.3;
+      const spikes = 4 + Math.floor(seededRandom(rSeed) * 3);
       for (let i = 0; i < spikes; i++) {
-        const spikeAngle = ((i - (spikes - 1) / 2) * 25 + (seededRandom(rSeed + i) - 0.5) * 10) * Math.PI / 180;
+        const spikeAngle = ((i - (spikes - 1) / 2) * 22 + (seededRandom(rSeed + i) - 0.5) * 8) * Math.PI / 180;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(Math.sin(spikeAngle) * 9, -Math.cos(spikeAngle) * 9);
+        ctx.lineTo(Math.sin(spikeAngle) * 11, -Math.cos(spikeAngle) * 11);
         ctx.stroke();
       }
     }
@@ -803,6 +876,7 @@ function renderGarden() {
   cards.forEach(c => c.remove());
 
   updateTodayHarvestCount();
+  updateCoinCount();
 
   // Render cards for existing trees
   state.trees.forEach(tree => {
@@ -918,15 +992,23 @@ function harvestTree() {
     return;
   }
 
+  // Calculate reward coins: 100 per task, minimum 1000 coins
+  const rewardCoins = Math.max(tree.tasks.length * 100, 1000);
+
   tree.harvested = true;
   tree.harvestedAt = Date.now();
   saveTrees();
+
+  // Add coins and save to local storage
+  state.coins += rewardCoins;
+  localStorage.setItem('garden_focus_coins', state.coins);
+  updateCoinCount();
 
   // Play rich success sound
   playSynthSound('harvest');
 
   // Show a sweet alert
-  alert(`🎉 「${tree.name}」を収穫しました！収穫カゴに保管されました。`);
+  alert(`🎉 「${tree.name}」を収穫しました！\n🎁 収穫報酬として 【 ${rewardCoins.toLocaleString()} ICHIGO 🍓 】 を獲得しました！\n収穫した木は収穫カゴに保管されました。`);
 
   // Go back to garden
   renderGarden();

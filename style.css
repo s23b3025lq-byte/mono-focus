@@ -769,3 +769,19 @@ header {
   padding: 2.5rem 1rem;
   color: #8C8275;
 }
+
+/* Coin Badge style */
+.coin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #FEE2E2; /* Pale red/pink */
+  color: #9D174D; /* Deep strawberry pink */
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(157, 23, 77, 0.15);
+  box-shadow: 0 2px 8px rgba(157, 23, 77, 0.08);
+  user-select: none;
+}
