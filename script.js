@@ -239,7 +239,6 @@ function getOrLoadImage(src, callback) {
     }
   }
   const img = new Image();
-  img.crossOrigin = "anonymous";
   imageCache[src] = {
     img: img,
     loaded: false,
