@@ -1,14 +1,49 @@
 // Garden Focus / Task Tree State & Logic
 
 const state = {
-  trees: JSON.parse(localStorage.getItem('garden_focus_trees')) || [],
+  trees: [],
   currentTreeId: null,
   geminiApiKey: localStorage.getItem('gemini_api_key') || '',
   selectedTreeType: 'apple', // For the "Add Tree" Modal
-  coins: parseInt(localStorage.getItem('garden_focus_coins')) || 0,
-  decorations: JSON.parse(localStorage.getItem('garden_decorations')) || [],
-  unlockedBadges: JSON.parse(localStorage.getItem('garden_unlocked_badges')) || []
+  coins: 0,
+  decorations: [],
+  unlockedBadges: []
 };
+
+// Safe JSON parse helper to prevent startup crashes
+function safeJsonParse(key, defaultValue) {
+  try {
+    const data = localStorage.getItem(key);
+    if (!data) return defaultValue;
+    const parsed = JSON.parse(data);
+    return parsed !== null ? parsed : defaultValue;
+  } catch (e) {
+    console.error(`Error parsing localStorage key "${key}":`, e);
+    return defaultValue;
+  }
+}
+
+// Load states safely
+state.trees = safeJsonParse('garden_focus_trees', []);
+state.coins = parseInt(localStorage.getItem('garden_focus_coins')) || 0;
+state.decorations = safeJsonParse('garden_decorations', []);
+state.unlockedBadges = safeJsonParse('garden_unlocked_badges', []);
+
+if (isNaN(state.coins)) state.coins = 0;
+
+// Sanitize trees to ensure they all have valid tasks array to prevent crashes
+state.trees = state.trees.map(tree => {
+  if (!tree || typeof tree !== 'object') return null;
+  return {
+    id: tree.id || `${Date.now()}-${Math.random()}`,
+    name: tree.name || '無題の木',
+    type: tree.type || 'apple',
+    tasks: Array.isArray(tree.tasks) ? tree.tasks : [],
+    harvested: !!tree.harvested,
+    harvestedAt: tree.harvestedAt || null
+  };
+}).filter(Boolean);
+
 
 // DOM Elements
 const elements = {
@@ -114,7 +149,7 @@ function getBadgeName(badgeId) {
     case 'first_harvest': return '見習い庭師 🌱';
     case 'apple_master': return 'リンゴ農家 🍎';
     case 'cherry_master': return 'お花見隊長 🌸';
-    case 'rich_gardener': return '富豪 of ICHIGO 💰';
+    case 'rich_gardener': return '富豪 of FRUIT 💰';
     case 'grand_harvester': return '巨木の守護者 🌟';
     default: return '実績';
   }
@@ -192,36 +227,10 @@ function seededRandom(seed) {
 // Image cache for preloaded vector templates
 const imageCache = {};
 
-// Pixel-level white transparency conversion to restore background
-function makeImageTransparent(img) {
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = img.width;
-  tempCanvas.height = img.height;
-  const tempCtx = tempCanvas.getContext('2d');
-  tempCtx.drawImage(img, 0, 0);
-  
-  const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-  const data = imgData.data;
-  
-  // threshold to detect white pixels (AI generated trees have pure white #ffffff background)
-  const threshold = 240;
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i+1];
-    const b = data[i+2];
-    if (r > threshold && g > threshold && b > threshold) {
-      data[i+3] = 0; // Alpha = 0 (Transparent)
-    }
-  }
-  
-  tempCtx.putImageData(imgData, 0, 0);
-  return tempCanvas;
-}
-
 function getOrLoadImage(src, callback) {
   if (imageCache[src]) {
     if (imageCache[src].loaded) {
-      return imageCache[src].transparentCanvas || imageCache[src].img;
+      return imageCache[src].img;
     } else {
       if (callback && !imageCache[src].callbacks.includes(callback)) {
         imageCache[src].callbacks.push(callback);
@@ -230,20 +239,13 @@ function getOrLoadImage(src, callback) {
     }
   }
   const img = new Image();
+  img.crossOrigin = "anonymous";
   imageCache[src] = {
     img: img,
     loaded: false,
-    transparentCanvas: null,
     callbacks: callback ? [callback] : []
   };
   img.onload = () => {
-    try {
-      // Convert white pixels to transparent to recover background
-      imageCache[src].transparentCanvas = makeImageTransparent(img);
-    } catch (e) {
-      console.warn(`Could not make image transparent (likely local CORS): ${src}`, e);
-      imageCache[src].transparentCanvas = null;
-    }
     imageCache[src].loaded = true;
     imageCache[src].callbacks.forEach(cb => {
       try { cb(); } catch (e) { console.error(e); }
@@ -737,6 +739,7 @@ function drawDecorations(ctx, width, height) {
 
 // Main tree rendering function using pre-loaded images & dynamic vector overlays
 function drawTree(canvas, type, tasks) {
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
   const ctx = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
@@ -808,7 +811,7 @@ function drawTree(canvas, type, tasks) {
   // Draw background decorations (bench, fountain, etc.) BEFORE drawing the tree itself
   drawDecorations(ctx, width, height);
 
-  if (tasks.length === 0) {
+  if (safeTasks.length === 0) {
     drawSprout(ctx, width / 2, height - 60);
     return;
   }
@@ -817,16 +820,16 @@ function drawTree(canvas, type, tasks) {
   let stage = 'sapling';
   let maxDepth = 3; 
 
-  if (tasks.length === 1 || tasks.length === 2) {
+  if (safeTasks.length === 1 || safeTasks.length === 2) {
     stage = 'sapling';
     maxDepth = 3;
-  } else if (tasks.length === 3 || tasks.length === 4) {
+  } else if (safeTasks.length === 3 || safeTasks.length === 4) {
     stage = 'small';
     maxDepth = 4;
-  } else if (tasks.length >= 5 && tasks.length <= 8) {
+  } else if (safeTasks.length >= 5 && safeTasks.length <= 8) {
     stage = 'medium';
     maxDepth = 5;
-  } else if (tasks.length >= 9 && tasks.length <= 15) {
+  } else if (safeTasks.length >= 9 && safeTasks.length <= 15) {
     stage = 'lush';
     maxDepth = 6;
   } else {
@@ -842,7 +845,7 @@ function drawTree(canvas, type, tasks) {
 
   const drawOverlayElements = () => {
     const activeCoords = [];
-    tasks.forEach((task, idx) => {
+    safeTasks.forEach((task, idx) => {
       const coordRaw = coordinates[idx % coordinates.length] || { x: 300, y: 300 };
       const coord = {
         x: coordRaw.x * scaleX,
@@ -866,8 +869,8 @@ function drawTree(canvas, type, tasks) {
   } else {
     const imagePath = `assets/${type}_${stage}.png`;
     const redrawCallback = () => {
-      if (canvas.isConnected) {
-        drawTree(canvas, type, tasks);
+      if (document.body.contains(canvas)) {
+        drawTree(canvas, type, safeTasks);
       }
     };
     
@@ -1204,15 +1207,11 @@ function renderTreeDetail() {
     // Populate list
     tree.tasks.forEach(task => {
       const row = document.createElement('div');
-      row.className = 'task-item';
+      row.className = `task-item ${task.status === 'done' ? 'done' : ''}`;
       
       const text = document.createElement('span');
       text.className = 'task-text';
       text.textContent = task.text;
-      if (task.status === 'done') {
-        text.style.textDecoration = 'line-through';
-        text.style.color = '#8C8275';
-      }
 
       // Actions Area
       const actions = document.createElement('div');
@@ -1610,7 +1609,7 @@ function harvestTree() {
   playSynthSound('harvest');
 
   // Show a sweet alert
-  alert(`🎉 「${tree.name}」を収穫しました！\n🎁 収穫報酬として 【 ${rewardCoins.toLocaleString()} ICHIGO 🍓 】 を獲得しました！\n収穫した木は収穫カゴに保管されました。`);
+  alert(`🎉 「${tree.name}」を収穫しました！\n🎁 収穫報酬として 【 ${rewardCoins.toLocaleString()} FRUIT 🍒 】 を獲得しました！\n収穫した木は収穫カゴに保管されました。`);
 
   // Achievements checking on harvest
   unlockBadge('first_harvest');
@@ -1729,12 +1728,12 @@ function renderShopModal() {
       btn.disabled = true;
     } 
     else if (state.coins < cost) {
-      btn.textContent = `${cost.toLocaleString()} 🍓`;
+      btn.textContent = `${cost.toLocaleString()} 🍒`;
       btn.className = 'btn-buy btn-organic disabled';
       btn.disabled = false;
     } 
     else {
-      btn.textContent = `${cost.toLocaleString()} 🍓`;
+      btn.textContent = `${cost.toLocaleString()} 🍒`;
       btn.className = 'btn-buy btn-organic';
       btn.disabled = false;
     }
@@ -1748,7 +1747,7 @@ function buyDecoration(type, cost) {
   }
   
   if (state.coins < cost) {
-    alert(`🍓 ICHIGOコインが足りません！\n購入には ${cost.toLocaleString()} ICHIGO が必要です。（現在の所持: ${state.coins.toLocaleString()}）\nタスクの木を完成させて「収穫」し、コインを稼ぎましょう！`);
+    alert(`🍒 FRUITコインが足りません！\n購入には ${cost.toLocaleString()} FRUIT が必要です。（現在の所持: ${state.coins.toLocaleString()}）\nタスクの木を完成させて「収穫」し、コインを稼ぎましょう！`);
     return;
   }
   

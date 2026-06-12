@@ -25,8 +25,8 @@
           <div id="today-harvest-container" class="harvest-counter-badge" title="今日のタスク完了数（収穫数）">
             🍎 <span id="today-harvest-count">0</span>
           </div>
-          <div id="coin-container" class="coin-badge" title="所持ICHIGOコイン">
-            🍓 <span id="coin-count">0</span>
+          <div id="coin-container" class="coin-badge" title="所持FRUITコイン">
+            🍒 <span id="coin-count">0</span>
           </div>
           <button id="open-shop-btn" class="shop-btn" title="ショップで庭のデコレーションを購入">
             🛍️ ショップ
@@ -219,7 +219,7 @@
             <div class="badge-icon" style="font-size: 1.5rem; filter: grayscale(100%); opacity: 0.4;">🌸</div>
             <div class="badge-name" style="font-size: 0.65rem; color: #8C8275; margin-top: 0.25rem;">サクラ</div>
           </div>
-          <div class="badge-item locked" id="badge-rich_gardener" title="富豪 of ICHIGO: 5,000 ICHIGOコインを突破">
+          <div class="badge-item locked" id="badge-rich_gardener" title="富豪 of FRUIT: 5,000 FRUITコインを突破">
             <div class="badge-icon" style="font-size: 1.5rem; filter: grayscale(100%); opacity: 0.4;">💰</div>
             <div class="badge-name" style="font-size: 0.65rem; color: #8C8275; margin-top: 0.25rem;">富豪</div>
           </div>
@@ -244,9 +244,9 @@
   <div id="shop-modal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
       <h2 class="modal-title" style="font-family: 'Outfit', sans-serif;">🛍️ 庭園デコレーションショップ</h2>
-      <p class="modal-desc">ICHIGOコインを消費して、庭（ホーム）画面を彩るデコレーションを購入できます。</p>
+      <p class="modal-desc">FRUITコインを消費して、庭（ホーム）画面を彩るデコレーションを購入できます。</p>
       
-      <div class="shop-items-grid" style="margin-bottom: 1.5rem; display: flex; flex-col; gap: 1rem;">
+      <div class="shop-items-grid" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
         <div class="shop-item" id="shop-item-bench" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #FAF6F0; border-radius: 8px;">
           <div style="display: flex; align-items: center; gap: 0.75rem;">
             <div class="shop-item-icon" style="font-size: 1.8rem;">🪑</div>
@@ -255,7 +255,7 @@
               <div class="shop-item-desc" style="font-size: 0.75rem; color: #8C8275;">庭の芝生に落ち着いたベンチを置きます。</div>
             </div>
           </div>
-          <button class="btn-buy btn-organic" id="buy-decor-bench" data-type="bench" data-cost="1000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">1,000 🍓</button>
+          <button class="btn-buy btn-organic" id="buy-decor-bench" data-type="bench" data-cost="1000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">1,000 🍒</button>
         </div>
         
         <div class="shop-item" id="shop-item-birdhouse" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #FAF6F0; border-radius: 8px;">
@@ -266,7 +266,7 @@
               <div class="shop-item-desc" style="font-size: 0.75rem; color: #8C8275;">木の横に設置し、時々青い鳥が遊びに来ます。</div>
             </div>
           </div>
-          <button class="btn-buy btn-organic" id="buy-decor-birdhouse" data-type="birdhouse" data-cost="2000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">2,000 🍓</button>
+          <button class="btn-buy btn-organic" id="buy-decor-birdhouse" data-type="birdhouse" data-cost="2000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">2,000 🍒</button>
         </div>
         
         <div class="shop-item" id="shop-item-fountain" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #FAF6F0; border-radius: 8px;">
@@ -277,7 +277,7 @@
               <div class="shop-item-desc" style="font-size: 0.75rem; color: #8C8275;">庭の空きスペースに大理石の噴水を作ります。</div>
             </div>
           </div>
-          <button class="btn-buy btn-organic" id="buy-decor-fountain" data-type="fountain" data-cost="5000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">5,000 🍓</button>
+          <button class="btn-buy btn-organic" id="buy-decor-fountain" data-type="fountain" data-cost="5000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">5,000 🍒</button>
         </div>
       </div>
 
