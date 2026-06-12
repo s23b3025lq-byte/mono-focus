@@ -16,10 +16,13 @@ const elements = {
   treeGrid: document.getElementById('tree-grid'),
   addTreeTrigger: document.getElementById('add-tree-trigger'),
   openSettingsBtn: document.getElementById('open-settings-btn'),
+  todayHarvestCount: document.getElementById('today-harvest-count'),
+  openBasketBtn: document.getElementById('open-basket-btn'),
   
   // Detail Screen
   backToGardenBtn: document.getElementById('back-to-garden-btn'),
   editTreeNameBtn: document.getElementById('edit-tree-name-btn'),
+  harvestTreeBtn: document.getElementById('harvest-tree-btn'),
   treeCanvas: document.getElementById('tree-canvas'),
   treeDetailName: document.getElementById('tree-detail-name'),
   treeDetailType: document.getElementById('tree-detail-type'),
@@ -40,7 +43,12 @@ const elements = {
   settingsModal: document.getElementById('settings-modal'),
   apiKeyInput: document.getElementById('api-key-input'),
   closeSettingsBtn: document.getElementById('close-settings-btn'),
-  saveSettingsBtn: document.getElementById('save-settings-btn')
+  saveSettingsBtn: document.getElementById('save-settings-btn'),
+
+  // Basket Modal
+  basketModal: document.getElementById('basket-modal'),
+  closeBasketBtn: document.getElementById('close-basket-btn'),
+  basketList: document.getElementById('basket-list')
 };
 
 // Ensure we have at least one tree in the garden by default
@@ -79,6 +87,9 @@ function playSynthSound(type = 'default') {
     } else if (type === 'nudge') {
       frequencies = [329.63, 261.63]; // E4 -> C4 short drop
       duration = 0.18;
+    } else if (type === 'harvest') {
+      frequencies = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]; // Joyful arpeggio C5 to G6
+      duration = 0.55;
     }
     
     const now = ctx.currentTime;
@@ -453,7 +464,9 @@ function confirmAddTree() {
     id: `${Date.now()}-${Math.random()}`,
     name: treeName,
     type: state.selectedTreeType,
-    tasks: []
+    tasks: [],
+    harvested: false,
+    harvestedAt: null
   };
 
   state.trees.push(newTree);
@@ -522,6 +535,7 @@ function renderTreeDetail() {
     `;
     elements.treeDetailProgressPercent.textContent = '0%';
     elements.treeDetailProgressFraction.textContent = '0/0';
+    elements.harvestTreeBtn.classList.add('hidden');
   } else {
     // Populate list
     tree.tasks.forEach(task => {
@@ -588,6 +602,12 @@ function renderTreeDetail() {
 
     elements.treeDetailProgressPercent.textContent = `${percent}%`;
     elements.treeDetailProgressFraction.textContent = `${done}/${total}`;
+
+    if (total > 0 && done === total && !tree.harvested) {
+      elements.harvestTreeBtn.classList.remove('hidden');
+    } else {
+      elements.harvestTreeBtn.classList.add('hidden');
+    }
   }
 
   // Redraw Canvas representation
@@ -620,6 +640,11 @@ function updateTaskStatus(taskId, newStatus) {
   const task = tree.tasks.find(t => t.id === taskId);
   if (task) {
     const isDoneTransition = task.status !== 'done' && newStatus === 'done';
+    if (newStatus === 'done') {
+      task.doneAt = task.doneAt || Date.now();
+    } else {
+      delete task.doneAt;
+    }
     task.status = newStatus;
     saveTrees();
     renderTreeDetail();
@@ -777,8 +802,11 @@ function renderGarden() {
   const cards = elements.treeGrid.querySelectorAll('.tree-card');
   cards.forEach(c => c.remove());
 
+  updateTodayHarvestCount();
+
   // Render cards for existing trees
   state.trees.forEach(tree => {
+    if (tree.harvested) return;
     const card = document.createElement('div');
     card.className = 'tree-card';
     card.dataset.id = tree.id;
@@ -858,12 +886,116 @@ function saveSettings() {
 }
 
 // ----------------------------------------------------
+// HARVEST & BASKET SYSTEM (v4)
+// ----------------------------------------------------
+
+function updateTodayHarvestCount() {
+  const todayStart = new Date().setHours(0, 0, 0, 0);
+  let count = 0;
+  state.trees.forEach(tree => {
+    if (tree.tasks) {
+      tree.tasks.forEach(task => {
+        if (task.status === 'done' && task.doneAt && task.doneAt >= todayStart) {
+          count++;
+        }
+      });
+    }
+  });
+  if (elements.todayHarvestCount) {
+    elements.todayHarvestCount.textContent = count;
+  }
+}
+
+function harvestTree() {
+  const tree = state.trees.find(t => t.id === state.currentTreeId);
+  if (!tree) return;
+
+  // Double check all tasks are done
+  const total = tree.tasks.length;
+  const done = tree.tasks.filter(t => t.status === 'done').length;
+  if (total === 0 || done !== total) {
+    alert("すべてのタスクが完了するまで収穫できません！");
+    return;
+  }
+
+  tree.harvested = true;
+  tree.harvestedAt = Date.now();
+  saveTrees();
+
+  // Play rich success sound
+  playSynthSound('harvest');
+
+  // Show a sweet alert
+  alert(`🎉 「${tree.name}」を収穫しました！収穫カゴに保管されました。`);
+
+  // Go back to garden
+  renderGarden();
+}
+
+function openBasket() {
+  renderBasketList();
+  elements.basketModal.classList.remove('hidden');
+}
+
+function closeBasket() {
+  elements.basketModal.classList.add('hidden');
+}
+
+function renderBasketList() {
+  elements.basketList.innerHTML = '';
+  const harvestedTrees = state.trees.filter(t => t.harvested);
+
+  if (harvestedTrees.length === 0) {
+    elements.basketList.innerHTML = `
+      <div class="basket-empty-state">
+        <p>まだ収穫された木はありません。<br>すべての課題を達成して収穫してみましょう！</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Sort by harvest date descending
+  harvestedTrees.sort((a, b) => b.harvestedAt - a.harvestedAt);
+
+  harvestedTrees.forEach(tree => {
+    const item = document.createElement('div');
+    item.className = 'basket-item';
+
+    const dateStr = new Date(tree.harvestedAt).toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    let treeIcon = '🌱';
+    if (tree.type === 'apple') treeIcon = '🍎';
+    if (tree.type === 'cherry') treeIcon = '🌸';
+    if (tree.type === 'cactus') treeIcon = '🌵';
+
+    item.innerHTML = `
+      <div class="basket-item-info">
+        <span class="basket-item-name">${tree.name}</span>
+        <span class="basket-item-meta">収穫日: ${dateStr} | 完了タスク: ${tree.tasks.length}個</span>
+      </div>
+      <div class="basket-item-badge">${treeIcon}</div>
+    `;
+
+    elements.basketList.appendChild(item);
+  });
+}
+
+// ----------------------------------------------------
 // EVENT LISTENERS CONFIGURATION
 // ----------------------------------------------------
 
 elements.openSettingsBtn.addEventListener('click', openSettings);
 elements.closeSettingsBtn.addEventListener('click', closeSettings);
 elements.saveSettingsBtn.addEventListener('click', saveSettings);
+
+elements.openBasketBtn.addEventListener('click', openBasket);
+elements.closeBasketBtn.addEventListener('click', closeBasket);
 
 elements.addTreeTrigger.addEventListener('click', openAddTreeModal);
 elements.cancelAddTreeBtn.addEventListener('click', closeAddTreeModal);
@@ -874,6 +1006,7 @@ elements.backToGardenBtn.addEventListener('click', () => {
 });
 
 elements.editTreeNameBtn.addEventListener('click', editTreeName);
+elements.harvestTreeBtn.addEventListener('click', harvestTree);
 
 // Selector options in Add Tree Modal
 elements.optionCards.forEach(card => {

@@ -637,3 +637,135 @@ header {
   color: #2E2A25;
   font-weight: 900;
 }
+
+/* Today's Harvest Counter Badge */
+.harvest-counter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #FEF3C7; /* Soft amber/yellow */
+  color: #92400E; /* Dark brown amber */
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(146, 64, 14, 0.15);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+  user-select: none;
+}
+
+/* Basket Button */
+.basket-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #F5EBE0; /* Light organic warm sand */
+  color: #5C4033;
+  border: 1px solid rgba(92, 64, 51, 0.15);
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.basket-btn:hover {
+  background-color: #E3D5CA;
+  border-color: #5C4033;
+  transform: translateY(-1px);
+}
+
+/* Harvest Button in Detail View */
+.btn-harvest {
+  background-color: #D97706; /* Vibrant amber gold */
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+  transition: all 0.2s ease;
+  animation: pulseButton 2.5s infinite;
+}
+
+@keyframes pulseButton {
+  0% {
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(217, 119, 6, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
+  }
+}
+
+.btn-harvest:hover {
+  background-color: #B45309;
+  transform: translateY(-1px);
+}
+
+.btn-harvest:active {
+  transform: scale(0.97);
+}
+
+/* Basket List items inside modal */
+.basket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.basket-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #FAF8F5;
+  border: 1px solid rgba(46, 42, 37, 0.08);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.basket-item:hover {
+  border-color: rgba(92, 64, 51, 0.25);
+  background-color: #ffffff;
+}
+
+.basket-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.basket-item-name {
+  font-weight: 800;
+  color: #2E2A25;
+  font-size: 1rem;
+}
+
+.basket-item-meta {
+  font-size: 0.75rem;
+  color: #8C8275;
+}
+
+.basket-item-badge {
+  font-size: 1.25rem;
+  padding: 0.4rem;
+  background-color: rgba(140, 130, 117, 0.08);
+  border-radius: 10px;
+}
+
+.basket-empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #8C8275;
+}

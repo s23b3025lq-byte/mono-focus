@@ -21,7 +21,13 @@
           <span class="logo-icon">🌿</span>
           <span class="logo-text" style="font-family: 'Outfit', sans-serif;">GARDEN FOCUS</span>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
+          <div id="today-harvest-container" class="harvest-counter-badge" title="今日のタスク完了数（収穫数）">
+            🍎 <span id="today-harvest-count">0</span>
+          </div>
+          <button id="open-basket-btn" class="basket-btn" title="収穫した木（アーカイブ）を見る">
+            🧺 収穫カゴ
+          </button>
           <button id="open-settings-btn" class="settings-btn" title="Settings">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
@@ -55,7 +61,12 @@
         <button id="back-to-garden-btn" class="text-button back-btn">
           <span>⬅</span> 庭に戻る
         </button>
-        <span class="phase-tag">Tree Detail</span>
+        <div class="flex items-center gap-3">
+          <button id="harvest-tree-btn" class="btn-harvest hidden" title="すべての課題を達成したので収穫する">
+            🧺 この木を収穫する
+          </button>
+          <span class="phase-tag">Tree Detail</span>
+        </div>
       </header>
 
       <main class="flex-1">
@@ -176,6 +187,22 @@
       <div class="flex justify-end gap-4" style="display: flex; justify-content: flex-end; gap: 1rem;">
         <button id="close-settings-btn" class="text-button">閉じる</button>
         <button id="save-settings-btn" class="btn-organic">保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. HARVEST BASKET MODAL -->
+  <div id="basket-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 550px;">
+      <h2 class="modal-title" style="font-family: 'Outfit', sans-serif;">🧺 収穫カゴ</h2>
+      <p class="modal-desc">これまでに収穫（タスク全達成）した木のコレクションです。</p>
+      
+      <div id="basket-list" class="basket-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem;">
+        <!-- Dynamically populated harvested trees -->
+      </div>
+
+      <div class="flex justify-end" style="display: flex; justify-content: flex-end;">
+        <button id="close-basket-btn" class="btn-organic">閉じる</button>
       </div>
     </div>
   </div>
