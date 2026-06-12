@@ -28,6 +28,9 @@
           <div id="coin-container" class="coin-badge" title="所持ICHIGOコイン">
             🍓 <span id="coin-count">0</span>
           </div>
+          <button id="open-shop-btn" class="shop-btn" title="ショップで庭のデコレーションを購入">
+            🛍️ ショップ
+          </button>
           <button id="open-basket-btn" class="basket-btn" title="収穫した木（アーカイブ）を見る">
             🧺 収穫カゴ
           </button>
@@ -200,12 +203,86 @@
       <h2 class="modal-title" style="font-family: 'Outfit', sans-serif;">🧺 収穫カゴ</h2>
       <p class="modal-desc">これまでに収穫（タスク全達成）した木のコレクションです。</p>
       
-      <div id="basket-list" class="basket-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem;">
+      <!-- Badges Section -->
+      <div class="badges-section" style="margin-bottom: 1.5rem; padding-bottom: 1.2rem; border-bottom: 2px solid #FAF6F0;">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #8C8275; margin-bottom: 0.75rem;">🏆 獲得した実績バッジ</h3>
+        <div id="badges-grid" class="badges-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; text-align: center;">
+          <div class="badge-item locked" id="badge-first_harvest" title="見習い庭師: 初めて木を収穫する">
+            <div class="badge-icon" style="font-size: 1.5rem; filter: grayscale(100%); opacity: 0.4;">🌱</div>
+            <div class="badge-name" style="font-size: 0.65rem; color: #8C8275; margin-top: 0.25rem;">見習い</div>
+          </div>
+          <div class="badge-item locked" id="badge-apple_master" title="リンゴ農家: リンゴの木を収穫する">
+            <div class="badge-icon" style="font-size: 1.5rem; filter: grayscale(100%); opacity: 0.4;">🍎</div>
+            <div class="badge-name" style="font-size: 0.65rem; color: #8C8275; margin-top: 0.25rem;">リンゴ</div>
+          </div>
+          <div class="badge-item locked" id="badge-cherry_master" title="お花見隊長: サクラの木を収穫する">
+            <div class="badge-icon" style="font-size: 1.5rem; filter: grayscale(100%); opacity: 0.4;">🌸</div>
+            <div class="badge-name" style="font-size: 0.65rem; color: #8C8275; margin-top: 0.25rem;">サクラ</div>
+          </div>
+          <div class="badge-item locked" id="badge-rich_gardener" title="富豪 of ICHIGO: 5,000 ICHIGOコインを突破">
+            <div class="badge-icon" style="font-size: 1.5rem; filter: grayscale(100%); opacity: 0.4;">💰</div>
+            <div class="badge-name" style="font-size: 0.65rem; color: #8C8275; margin-top: 0.25rem;">富豪</div>
+          </div>
+          <div class="badge-item locked" id="badge-grand_harvester" title="巨木の守護者: タスク16個以上の巨木を収穫する">
+            <div class="badge-icon" style="font-size: 1.5rem; filter: grayscale(100%); opacity: 0.4;">🌟</div>
+            <div class="badge-name" style="font-size: 0.65rem; color: #8C8275; margin-top: 0.25rem;">巨木</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="basket-list" class="basket-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 1.5rem;">
         <!-- Dynamically populated harvested trees -->
       </div>
 
       <div class="flex justify-end" style="display: flex; justify-content: flex-end;">
         <button id="close-basket-btn" class="btn-organic">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. DECORATION SHOP MODAL -->
+  <div id="shop-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <h2 class="modal-title" style="font-family: 'Outfit', sans-serif;">🛍️ 庭園デコレーションショップ</h2>
+      <p class="modal-desc">ICHIGOコインを消費して、庭（ホーム）画面を彩るデコレーションを購入できます。</p>
+      
+      <div class="shop-items-grid" style="margin-bottom: 1.5rem; display: flex; flex-col; gap: 1rem;">
+        <div class="shop-item" id="shop-item-bench" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #FAF6F0; border-radius: 8px;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="shop-item-icon" style="font-size: 1.8rem;">🪑</div>
+            <div>
+              <div class="shop-item-name" style="font-weight: 700; font-size: 0.9rem;">木製ベンチ</div>
+              <div class="shop-item-desc" style="font-size: 0.75rem; color: #8C8275;">庭の芝生に落ち着いたベンチを置きます。</div>
+            </div>
+          </div>
+          <button class="btn-buy btn-organic" id="buy-decor-bench" data-type="bench" data-cost="1000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">1,000 🍓</button>
+        </div>
+        
+        <div class="shop-item" id="shop-item-birdhouse" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #FAF6F0; border-radius: 8px;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="shop-item-icon" style="font-size: 1.8rem;">🐦</div>
+            <div>
+              <div class="shop-item-name" style="font-weight: 700; font-size: 0.9rem;">小鳥の巣箱</div>
+              <div class="shop-item-desc" style="font-size: 0.75rem; color: #8C8275;">木の横に設置し、時々青い鳥が遊びに来ます。</div>
+            </div>
+          </div>
+          <button class="btn-buy btn-organic" id="buy-decor-birdhouse" data-type="birdhouse" data-cost="2000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">2,000 🍓</button>
+        </div>
+        
+        <div class="shop-item" id="shop-item-fountain" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #FAF6F0; border-radius: 8px;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="shop-item-icon" style="font-size: 1.8rem;">⛲</div>
+            <div>
+              <div class="shop-item-name" style="font-weight: 700; font-size: 0.9rem;">美しい噴水</div>
+              <div class="shop-item-desc" style="font-size: 0.75rem; color: #8C8275;">庭の空きスペースに大理石の噴水を作ります。</div>
+            </div>
+          </div>
+          <button class="btn-buy btn-organic" id="buy-decor-fountain" data-type="fountain" data-cost="5000" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">5,000 🍓</button>
+        </div>
+      </div>
+
+      <div class="flex justify-end" style="display: flex; justify-content: flex-end;">
+        <button id="close-shop-btn" class="btn-organic">閉じる</button>
       </div>
     </div>
   </div>

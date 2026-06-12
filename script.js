@@ -5,7 +5,9 @@ const state = {
   currentTreeId: null,
   geminiApiKey: localStorage.getItem('gemini_api_key') || '',
   selectedTreeType: 'apple', // For the "Add Tree" Modal
-  coins: parseInt(localStorage.getItem('garden_focus_coins')) || 0
+  coins: parseInt(localStorage.getItem('garden_focus_coins')) || 0,
+  decorations: JSON.parse(localStorage.getItem('garden_decorations')) || [],
+  unlockedBadges: JSON.parse(localStorage.getItem('garden_unlocked_badges')) || []
 };
 
 // DOM Elements
@@ -19,6 +21,7 @@ const elements = {
   openSettingsBtn: document.getElementById('open-settings-btn'),
   todayHarvestCount: document.getElementById('today-harvest-count'),
   openBasketBtn: document.getElementById('open-basket-btn'),
+  openShopBtn: document.getElementById('open-shop-btn'),
   coinCount: document.getElementById('coin-count'),
   
   // Detail Screen
@@ -50,7 +53,12 @@ const elements = {
   // Basket Modal
   basketModal: document.getElementById('basket-modal'),
   closeBasketBtn: document.getElementById('close-basket-btn'),
-  basketList: document.getElementById('basket-list')
+  basketList: document.getElementById('basket-list'),
+
+  // Shop Modal
+  shopModal: document.getElementById('shop-modal'),
+  closeShopBtn: document.getElementById('close-shop-btn'),
+  buyDecorBtns: document.querySelectorAll('.btn-buy')
 };
 
 // Particle Animation Variables for Task Completion (v4)
@@ -81,6 +89,48 @@ function updateCoinCount() {
   if (elements.coinCount) {
     elements.coinCount.textContent = state.coins.toLocaleString();
   }
+  // Check for rich gardener badge
+  if (state.coins >= 5000) {
+    unlockBadge('rich_gardener');
+  }
+}
+
+// Badge Achievement logic
+function unlockBadge(badgeId) {
+  if (state.unlockedBadges.includes(badgeId)) return;
+  
+  state.unlockedBadges.push(badgeId);
+  localStorage.setItem('garden_unlocked_badges', JSON.stringify(state.unlockedBadges));
+  
+  // Play happy chime sound
+  playSynthSound('success');
+  
+  // Custom sweet alert for badge unlock
+  alert(`🏆 実績アンロック！\nバッジ「${getBadgeName(badgeId)}」を獲得しました！\n収穫カゴから確認できます。`);
+}
+
+function getBadgeName(badgeId) {
+  switch (badgeId) {
+    case 'first_harvest': return '見習い庭師 🌱';
+    case 'apple_master': return 'リンゴ農家 🍎';
+    case 'cherry_master': return 'お花見隊長 🌸';
+    case 'rich_gardener': return '富豪 of ICHIGO 💰';
+    case 'grand_harvester': return '巨木の守護者 🌟';
+    default: return '実績';
+  }
+}
+
+// Image Preloading to eliminate load delays
+const ALL_ASSETS = [
+  'assets/apple_sapling.png', 'assets/apple_small.png', 'assets/apple_medium.png', 'assets/apple_lush.png', 'assets/apple_grand.png',
+  'assets/cherry_sapling.png', 'assets/cherry_small.png', 'assets/cherry_medium.png', 'assets/cherry_lush.png', 'assets/cherry_grand.png',
+  'assets/cactus_sapling.png', 'assets/cactus_small.png'
+];
+
+function preloadAllImages() {
+  ALL_ASSETS.forEach(src => {
+    getOrLoadImage(src);
+  });
 }
 
 // Play synth sound using Web Audio API
@@ -142,10 +192,36 @@ function seededRandom(seed) {
 // Image cache for preloaded vector templates
 const imageCache = {};
 
+// Pixel-level white transparency conversion to restore background
+function makeImageTransparent(img) {
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = img.width;
+  tempCanvas.height = img.height;
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.drawImage(img, 0, 0);
+  
+  const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+  const data = imgData.data;
+  
+  // threshold to detect white pixels (AI generated trees have pure white #ffffff background)
+  const threshold = 240;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i+1];
+    const b = data[i+2];
+    if (r > threshold && g > threshold && b > threshold) {
+      data[i+3] = 0; // Alpha = 0 (Transparent)
+    }
+  }
+  
+  tempCtx.putImageData(imgData, 0, 0);
+  return tempCanvas;
+}
+
 function getOrLoadImage(src, callback) {
   if (imageCache[src]) {
     if (imageCache[src].loaded) {
-      return imageCache[src].img;
+      return imageCache[src].transparentCanvas || imageCache[src].img;
     } else {
       if (callback && !imageCache[src].callbacks.includes(callback)) {
         imageCache[src].callbacks.push(callback);
@@ -157,9 +233,17 @@ function getOrLoadImage(src, callback) {
   imageCache[src] = {
     img: img,
     loaded: false,
+    transparentCanvas: null,
     callbacks: callback ? [callback] : []
   };
   img.onload = () => {
+    try {
+      // Convert white pixels to transparent to recover background
+      imageCache[src].transparentCanvas = makeImageTransparent(img);
+    } catch (e) {
+      console.warn(`Could not make image transparent (likely local CORS): ${src}`, e);
+      imageCache[src].transparentCanvas = null;
+    }
     imageCache[src].loaded = true;
     imageCache[src].callbacks.forEach(cb => {
       try { cb(); } catch (e) { console.error(e); }
@@ -473,6 +557,184 @@ function drawVectorCactus(ctx, width, height, maxDepth) {
   ctx.restore();
 }
 
+// Render owned garden decorations (bench, birdhouse, fountain) on Canvas background (soil level = 540)
+function drawDecorations(ctx, width, height) {
+  ctx.save();
+  // Scale down automatically to standard 600x600 grid coordinates
+  const scale = width / 600;
+  ctx.scale(scale, scale);
+
+  const soilY = 540; // 600 - 60
+
+  // 1. Birdhouse (🐦)
+  if (state.decorations.includes('birdhouse')) {
+    const bx = 420;
+    const by = 430;
+    
+    // Pole
+    ctx.strokeStyle = '#8B5A2B';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(bx, soilY);
+    ctx.lineTo(bx, by + 30);
+    ctx.stroke();
+    
+    // House body (flat vector style)
+    ctx.fillStyle = '#C084FC'; // Lilac purple
+    ctx.strokeStyle = '#701A75';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(bx - 18, by - 10, 36, 40, 4);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Roof
+    ctx.fillStyle = '#F43F5E'; // Red roof
+    ctx.beginPath();
+    ctx.moveTo(bx - 24, by - 10);
+    ctx.lineTo(bx, by - 32);
+    ctx.lineTo(bx + 24, by - 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    // Hole
+    ctx.fillStyle = '#2E2A25';
+    ctx.beginPath();
+    ctx.arc(bx, by + 10, 8, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Stand peg
+    ctx.fillStyle = '#8B5A2B';
+    ctx.fillRect(bx - 2, by + 22, 4, 8);
+    
+    // Tiny blue bird sitting on the peg!
+    ctx.fillStyle = '#60A5FA'; // Sky blue bird body
+    ctx.beginPath();
+    ctx.arc(bx + 8, by + 18, 5, 0, 2 * Math.PI); // Head
+    ctx.arc(bx + 14, by + 24, 7, 0, 2 * Math.PI); // Body
+    ctx.fill();
+    
+    // Beak
+    ctx.fillStyle = '#F59E0B';
+    ctx.beginPath();
+    ctx.moveTo(bx + 5, by + 17);
+    ctx.lineTo(bx + 2, by + 19);
+    ctx.lineTo(bx + 5, by + 21);
+    ctx.fill();
+  }
+
+  // 2. Bench (🪑)
+  if (state.decorations.includes('bench')) {
+    const bx = 480;
+    const by = soilY - 2;
+    
+    ctx.strokeStyle = '#5C4033';
+    ctx.lineWidth = 3;
+    
+    // Backrest supports
+    ctx.beginPath();
+    ctx.moveTo(bx - 40, by - 38);
+    ctx.lineTo(bx - 40, by);
+    ctx.moveTo(bx + 40, by - 38);
+    ctx.lineTo(bx + 40, by);
+    ctx.stroke();
+    
+    // Legs
+    ctx.beginPath();
+    ctx.moveTo(bx - 32, by);
+    ctx.lineTo(bx - 32, by + 20);
+    ctx.moveTo(bx - 20, by);
+    ctx.lineTo(bx - 20, by + 20);
+    ctx.moveTo(bx + 20, by);
+    ctx.lineTo(bx + 20, by + 20);
+    ctx.moveTo(bx + 32, by);
+    ctx.lineTo(bx + 32, by + 20);
+    ctx.stroke();
+    
+    // Wooden slats (backrest)
+    ctx.fillStyle = '#C68642'; // Light teak
+    ctx.beginPath();
+    ctx.roundRect(bx - 48, by - 34, 96, 10, 2);
+    ctx.roundRect(bx - 48, by - 20, 96, 10, 2);
+    // Seat slats
+    ctx.roundRect(bx - 48, by - 6, 96, 8, 2);
+    ctx.fill();
+    
+    ctx.stroke();
+  }
+
+  // 3. Beautiful Fountain ( Fountain ⛲ )
+  if (state.decorations.includes('fountain')) {
+    const fx = 120;
+    const fy = soilY;
+    
+    // Base tier
+    ctx.fillStyle = '#E2E8F0';
+    ctx.strokeStyle = '#94A3B8';
+    ctx.lineWidth = 2;
+    
+    ctx.beginPath();
+    ctx.ellipse(fx, fy + 8, 48, 12, 0, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Main column
+    ctx.beginPath();
+    ctx.moveTo(fx - 8, fy + 8);
+    ctx.quadraticCurveTo(fx - 4, fy - 25, fx - 10, fy - 65);
+    ctx.lineTo(fx + 10, fy - 65);
+    ctx.quadraticCurveTo(fx + 4, fy - 25, fx + 8, fy + 8);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Lower bowl
+    ctx.beginPath();
+    ctx.ellipse(fx, fy - 20, 36, 9, 0, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Upper bowl
+    ctx.beginPath();
+    ctx.ellipse(fx, fy - 65, 22, 6, 0, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Water pools inside bowls (blue)
+    ctx.fillStyle = '#93C5FD';
+    ctx.beginPath();
+    ctx.ellipse(fx, fy - 21, 33, 7, 0, 0, 2 * Math.PI);
+    ctx.ellipse(fx, fy - 66, 19, 4, 0, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Spouting water splashes (vector curves)
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    // Top spout
+    ctx.moveTo(fx, fy - 70);
+    ctx.quadraticCurveTo(fx - 14, fy - 95, fx - 20, fy - 45);
+    ctx.moveTo(fx, fy - 70);
+    ctx.quadraticCurveTo(fx + 14, fy - 95, fx + 20, fy - 45);
+    // Lower overflow
+    ctx.moveTo(fx - 24, fy - 22);
+    ctx.quadraticCurveTo(fx - 34, fy - 18, fx - 36, fy + 5);
+    ctx.moveTo(fx + 24, fy - 22);
+    ctx.quadraticCurveTo(fx + 34, fy - 18, fx + 36, fy + 5);
+    ctx.stroke();
+    
+    // Sparkle dots
+    ctx.fillStyle = '#E0F2FE';
+    ctx.beginPath();
+    ctx.arc(fx - 18, fy - 55, 2, 0, 2 * Math.PI);
+    ctx.arc(fx + 18, fy - 55, 2, 0, 2 * Math.PI);
+    ctx.arc(fx, fy - 92, 3, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  
+  ctx.restore();
+}
+
 // Main tree rendering function using pre-loaded images & dynamic vector overlays
 function drawTree(canvas, type, tasks) {
   const ctx = canvas.getContext('2d');
@@ -542,6 +804,9 @@ function drawTree(canvas, type, tasks) {
     ctx.lineWidth = 1;
     ctx.stroke();
   }
+
+  // Draw background decorations (bench, fountain, etc.) BEFORE drawing the tree itself
+  drawDecorations(ctx, width, height);
 
   if (tasks.length === 0) {
     drawSprout(ctx, width / 2, height - 60);
@@ -1347,6 +1612,17 @@ function harvestTree() {
   // Show a sweet alert
   alert(`🎉 「${tree.name}」を収穫しました！\n🎁 収穫報酬として 【 ${rewardCoins.toLocaleString()} ICHIGO 🍓 】 を獲得しました！\n収穫した木は収穫カゴに保管されました。`);
 
+  // Achievements checking on harvest
+  unlockBadge('first_harvest');
+  if (tree.type === 'apple') {
+    unlockBadge('apple_master');
+  } else if (tree.type === 'cherry') {
+    unlockBadge('cherry_master');
+  }
+  if (tree.tasks.length >= 16) {
+    unlockBadge('grand_harvester');
+  }
+
   // Go back to garden
   renderGarden();
 }
@@ -1362,6 +1638,30 @@ function closeBasket() {
 
 function renderBasketList() {
   elements.basketList.innerHTML = '';
+  
+  // Highlight unlocked badges in UI
+  const badgeIds = ['first_harvest', 'apple_master', 'cherry_master', 'rich_gardener', 'grand_harvester'];
+  badgeIds.forEach(id => {
+    const badgeEl = document.getElementById(`badge-${id}`);
+    if (badgeEl) {
+      if (state.unlockedBadges.includes(id)) {
+        badgeEl.classList.remove('locked');
+        badgeEl.classList.add('unlocked');
+        
+        const iconEl = badgeEl.querySelector('.badge-icon');
+        if (iconEl) {
+          iconEl.style.filter = 'none';
+          iconEl.style.opacity = '1';
+        }
+        const nameEl = badgeEl.querySelector('.badge-name');
+        if (nameEl) {
+          nameEl.style.color = '#2E2A25';
+          nameEl.style.fontWeight = '700';
+        }
+      }
+    }
+  });
+
   const harvestedTrees = state.trees.filter(t => t.harvested);
 
   if (harvestedTrees.length === 0) {
@@ -1375,6 +1675,82 @@ function renderBasketList() {
 
   // Sort by harvest date descending
   harvestedTrees.sort((a, b) => b.harvestedAt - a.harvestedAt);
+
+  // ----------------------------------------------------
+  // DECORATION SHOP SYSTEM
+  // ----------------------------------------------------
+
+  function openShop() {
+    renderShopModal();
+    elements.shopModal.classList.remove('hidden');
+  }
+
+  function closeShop() {
+    elements.shopModal.classList.add('hidden');
+  }
+
+  function renderShopModal() {
+    elements.buyDecorBtns.forEach(btn => {
+      const type = btn.dataset.type;
+      const cost = parseInt(btn.dataset.cost);
+      
+      if (state.decorations.includes(type)) {
+        btn.textContent = '設置済';
+        btn.className = 'btn-buy btn-organic owned';
+        btn.disabled = true;
+      } 
+      else if (state.coins < cost) {
+        btn.textContent = `${cost.toLocaleString()} 🍓`;
+        btn.className = 'btn-buy btn-organic disabled';
+        btn.disabled = false;
+      } 
+      else {
+        btn.textContent = `${cost.toLocaleString()} 🍓`;
+        btn.className = 'btn-buy btn-organic';
+        btn.disabled = false;
+      }
+    });
+  }
+
+  function buyDecoration(type, cost) {
+    if (state.decorations.includes(type)) {
+      alert("すでに購入済みのデコレーションです。");
+      return;
+    }
+    
+    if (state.coins < cost) {
+      alert(`🍓 ICHIGOコインが足りません！\n購入には ${cost.toLocaleString()} ICHIGO が必要です。（現在の所持: ${state.coins.toLocaleString()}）\nタスクの木を完成させて「収穫」し、コインを稼ぎましょう！`);
+      return;
+    }
+    
+    state.coins -= cost;
+    state.decorations.push(type);
+    
+    localStorage.setItem('garden_focus_coins', state.coins);
+    localStorage.setItem('garden_decorations', JSON.stringify(state.decorations));
+    
+    updateCoinCount();
+    playSynthSound('success');
+    
+    alert(`🛍️ 購入完了！\n「${getDecorName(type)}」を購入しました！\nさっそく庭園にデコレーションが設置されました。`);
+    
+    renderShopModal();
+    renderGarden();
+  }
+
+  function getDecorName(type) {
+    switch (type) {
+      case 'bench': return '木製ベンチ';
+      case 'birdhouse': return '小鳥の巣箱';
+      case 'fountain': return '美しい噴水';
+      default: return 'デコレーション';
+    }
+  }
+
+  // Bind shop DOM events (scoped in window)
+  window.openShop = openShop;
+  window.closeShop = closeShop;
+  window.buyDecoration = buyDecoration;
 
   harvestedTrees.forEach(tree => {
     const item = document.createElement('div');
@@ -1491,6 +1867,17 @@ elements.saveSettingsBtn.addEventListener('click', saveSettings);
 elements.openBasketBtn.addEventListener('click', openBasket);
 elements.closeBasketBtn.addEventListener('click', closeBasket);
 
+// Shop elements events
+if (elements.openShopBtn) elements.openShopBtn.addEventListener('click', openShop);
+if (elements.closeShopBtn) elements.closeShopBtn.addEventListener('click', closeShop);
+elements.buyDecorBtns.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const type = e.currentTarget.dataset.type;
+    const cost = parseInt(e.currentTarget.dataset.cost);
+    buyDecoration(type, cost);
+  });
+});
+
 elements.addTreeTrigger.addEventListener('click', openAddTreeModal);
 elements.cancelAddTreeBtn.addEventListener('click', closeAddTreeModal);
 elements.confirmAddTreeBtn.addEventListener('click', confirmAddTree);
@@ -1509,10 +1896,6 @@ elements.optionCards.forEach(card => {
 
 // Add Task Bindings
 elements.addTaskBtn.addEventListener('click', () => {
-  // If task ends with [AI] token or key was hold, do AI, else normal
-  // We can let the button trigger AI decomposition if Shift key was pressed,
-  // or simply check if the user wants AI decomposition if they double click/held it.
-  // To keep it simple and clean, if text contains "ai:" prefix or user clicks normal, we decide:
   const text = elements.taskInput.value.trim();
   if (text.startsWith('ai:') || text.startsWith('AI:')) {
     elements.taskInput.value = text.replace(/^(ai:|AI:)/, '').trim();
@@ -1541,6 +1924,9 @@ elements.treeNameInput.addEventListener('keydown', (e) => {
     confirmAddTree();
   }
 });
+
+// Preload all assets to prevent image load lags
+preloadAllImages();
 
 // Initialize Garden view on load
 renderGarden();
