@@ -1676,82 +1676,6 @@ function renderBasketList() {
   // Sort by harvest date descending
   harvestedTrees.sort((a, b) => b.harvestedAt - a.harvestedAt);
 
-  // ----------------------------------------------------
-  // DECORATION SHOP SYSTEM
-  // ----------------------------------------------------
-
-  function openShop() {
-    renderShopModal();
-    elements.shopModal.classList.remove('hidden');
-  }
-
-  function closeShop() {
-    elements.shopModal.classList.add('hidden');
-  }
-
-  function renderShopModal() {
-    elements.buyDecorBtns.forEach(btn => {
-      const type = btn.dataset.type;
-      const cost = parseInt(btn.dataset.cost);
-      
-      if (state.decorations.includes(type)) {
-        btn.textContent = '設置済';
-        btn.className = 'btn-buy btn-organic owned';
-        btn.disabled = true;
-      } 
-      else if (state.coins < cost) {
-        btn.textContent = `${cost.toLocaleString()} 🍓`;
-        btn.className = 'btn-buy btn-organic disabled';
-        btn.disabled = false;
-      } 
-      else {
-        btn.textContent = `${cost.toLocaleString()} 🍓`;
-        btn.className = 'btn-buy btn-organic';
-        btn.disabled = false;
-      }
-    });
-  }
-
-  function buyDecoration(type, cost) {
-    if (state.decorations.includes(type)) {
-      alert("すでに購入済みのデコレーションです。");
-      return;
-    }
-    
-    if (state.coins < cost) {
-      alert(`🍓 ICHIGOコインが足りません！\n購入には ${cost.toLocaleString()} ICHIGO が必要です。（現在の所持: ${state.coins.toLocaleString()}）\nタスクの木を完成させて「収穫」し、コインを稼ぎましょう！`);
-      return;
-    }
-    
-    state.coins -= cost;
-    state.decorations.push(type);
-    
-    localStorage.setItem('garden_focus_coins', state.coins);
-    localStorage.setItem('garden_decorations', JSON.stringify(state.decorations));
-    
-    updateCoinCount();
-    playSynthSound('success');
-    
-    alert(`🛍️ 購入完了！\n「${getDecorName(type)}」を購入しました！\nさっそく庭園にデコレーションが設置されました。`);
-    
-    renderShopModal();
-    renderGarden();
-  }
-
-  function getDecorName(type) {
-    switch (type) {
-      case 'bench': return '木製ベンチ';
-      case 'birdhouse': return '小鳥の巣箱';
-      case 'fountain': return '美しい噴水';
-      default: return 'デコレーション';
-    }
-  }
-
-  // Bind shop DOM events (scoped in window)
-  window.openShop = openShop;
-  window.closeShop = closeShop;
-  window.buyDecoration = buyDecoration;
-
   harvestedTrees.forEach(tree => {
     const item = document.createElement('div');
     item.className = 'basket-item';
@@ -1779,6 +1703,77 @@ function renderBasketList() {
 
     elements.basketList.appendChild(item);
   });
+}
+
+// ----------------------------------------------------
+// DECORATION SHOP SYSTEM
+// ----------------------------------------------------
+
+function openShop() {
+  renderShopModal();
+  elements.shopModal.classList.remove('hidden');
+}
+
+function closeShop() {
+  elements.shopModal.classList.add('hidden');
+}
+
+function renderShopModal() {
+  elements.buyDecorBtns.forEach(btn => {
+    const type = btn.dataset.type;
+    const cost = parseInt(btn.dataset.cost);
+    
+    if (state.decorations.includes(type)) {
+      btn.textContent = '設置済';
+      btn.className = 'btn-buy btn-organic owned';
+      btn.disabled = true;
+    } 
+    else if (state.coins < cost) {
+      btn.textContent = `${cost.toLocaleString()} 🍓`;
+      btn.className = 'btn-buy btn-organic disabled';
+      btn.disabled = false;
+    } 
+    else {
+      btn.textContent = `${cost.toLocaleString()} 🍓`;
+      btn.className = 'btn-buy btn-organic';
+      btn.disabled = false;
+    }
+  });
+}
+
+function buyDecoration(type, cost) {
+  if (state.decorations.includes(type)) {
+    alert("すでに購入済みのデコレーションです。");
+    return;
+  }
+  
+  if (state.coins < cost) {
+    alert(`🍓 ICHIGOコインが足りません！\n購入には ${cost.toLocaleString()} ICHIGO が必要です。（現在の所持: ${state.coins.toLocaleString()}）\nタスクの木を完成させて「収穫」し、コインを稼ぎましょう！`);
+    return;
+  }
+  
+  state.coins -= cost;
+  state.decorations.push(type);
+  
+  localStorage.setItem('garden_focus_coins', state.coins);
+  localStorage.setItem('garden_decorations', JSON.stringify(state.decorations));
+  
+  updateCoinCount();
+  playSynthSound('success');
+  
+  alert(`🛍️ 購入完了！\n「${getDecorName(type)}」を購入しました！\nさっそく庭園にデコレーションが設置されました。`);
+  
+  renderShopModal();
+  renderGarden();
+}
+
+function getDecorName(type) {
+  switch (type) {
+    case 'bench': return '木製ベンチ';
+    case 'birdhouse': return '小鳥の巣箱';
+    case 'fountain': return '美しい噴水';
+    default: return 'デコレーション';
+  }
 }
 
 // ----------------------------------------------------
