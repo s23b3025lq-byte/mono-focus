@@ -130,7 +130,7 @@ function playSynthSound(type = 'default') {
 }
 
 // ----------------------------------------------------
-// CANVAS RENDERING ENGINE (FRACTAL TREE GRAPHICS)
+// CANVAS RENDERING ENGINE (MODERN VECTOR BACKGROUNDS & OVERLAYS)
 // ----------------------------------------------------
 
 // Deterministic random generation based on a seed value to prevent wiggling on re-renders
@@ -138,6 +138,131 @@ function seededRandom(seed) {
   const x = Math.sin(seed++) * 10000;
   return x - Math.floor(x);
 }
+
+// Image cache for preloaded vector templates
+const imageCache = {};
+
+function getOrLoadImage(src, callback) {
+  if (imageCache[src]) {
+    if (imageCache[src].loaded) {
+      return imageCache[src].img;
+    } else {
+      if (callback && !imageCache[src].callbacks.includes(callback)) {
+        imageCache[src].callbacks.push(callback);
+      }
+      return null;
+    }
+  }
+  const img = new Image();
+  imageCache[src] = {
+    img: img,
+    loaded: false,
+    callbacks: callback ? [callback] : []
+  };
+  img.onload = () => {
+    imageCache[src].loaded = true;
+    imageCache[src].callbacks.forEach(cb => {
+      try { cb(); } catch (e) { console.error(e); }
+    });
+    imageCache[src].callbacks = [];
+  };
+  img.onerror = () => {
+    console.error(`Failed to load image: ${src}`);
+    imageCache[src].loaded = false;
+  };
+  img.src = src;
+  return null;
+}
+
+// Coordinates mapping on a 600x600 grid for placing overlay task fruits/blossoms
+const TREE_FRUIT_COORDINATES = {
+  apple: {
+    sapling: [
+      { x: 300, y: 220 }, { x: 250, y: 310 }
+    ],
+    small: [
+      { x: 300, y: 190 }, { x: 230, y: 270 }, { x: 370, y: 260 }, { x: 290, y: 320 }
+    ],
+    medium: [
+      { x: 300, y: 170 }, { x: 220, y: 250 }, { x: 380, y: 240 }, { x: 270, y: 310 },
+      { x: 340, y: 300 }, { x: 180, y: 290 }, { x: 420, y: 280 }, { x: 310, y: 240 }
+    ],
+    lush: [
+      { x: 300, y: 140 }, { x: 220, y: 220 }, { x: 380, y: 210 }, { x: 250, y: 290 },
+      { x: 350, y: 280 }, { x: 180, y: 270 }, { x: 420, y: 260 }, { x: 310, y: 200 },
+      { x: 270, y: 170 }, { x: 330, y: 160 }, { x: 150, y: 320 }, { x: 450, y: 310 },
+      { x: 290, y: 350 }, { x: 350, y: 350 }, { x: 200, y: 340 }
+    ],
+    grand: [
+      { x: 300, y: 120 }, { x: 210, y: 200 }, { x: 390, y: 190 }, { x: 240, y: 270 },
+      { x: 360, y: 260 }, { x: 170, y: 250 }, { x: 430, y: 240 }, { x: 310, y: 180 },
+      { x: 260, y: 150 }, { x: 340, y: 140 }, { x: 140, y: 300 }, { x: 460, y: 290 },
+      { x: 280, y: 330 }, { x: 340, y: 330 }, { x: 190, y: 320 }, { x: 410, y: 310 },
+      { x: 220, y: 150 }, { x: 380, y: 140 }, { x: 110, y: 350 }, { x: 490, y: 340 },
+      { x: 250, y: 380 }, { x: 350, y: 380 }, { x: 300, y: 240 }, { x: 160, y: 400 },
+      { x: 440, y: 390 }
+    ]
+  },
+  cherry: {
+    sapling: [
+      { x: 300, y: 230 }, { x: 260, y: 300 }
+    ],
+    small: [
+      { x: 300, y: 195 }, { x: 235, y: 265 }, { x: 365, y: 255 }, { x: 285, y: 315 }
+    ],
+    medium: [
+      { x: 300, y: 175 }, { x: 225, y: 245 }, { x: 375, y: 235 }, { x: 275, y: 305 },
+      { x: 335, y: 295 }, { x: 185, y: 285 }, { x: 415, y: 275 }, { x: 315, y: 235 }
+    ],
+    lush: [
+      { x: 300, y: 145 }, { x: 225, y: 215 }, { x: 375, y: 205 }, { x: 255, y: 285 },
+      { x: 345, y: 275 }, { x: 185, y: 265 }, { x: 415, y: 255 }, { x: 315, y: 195 },
+      { x: 275, y: 165 }, { x: 335, y: 155 }, { x: 155, y: 315 }, { x: 445, y: 305 },
+      { x: 285, y: 345 }, { x: 345, y: 345 }, { x: 205, y: 335 }
+    ],
+    grand: [
+      { x: 300, y: 125 }, { x: 215, y: 195 }, { x: 385, y: 185 }, { x: 245, y: 265 },
+      { x: 355, y: 255 }, { x: 175, y: 245 }, { x: 425, y: 235 }, { x: 315, y: 175 },
+      { x: 265, y: 145 }, { x: 345, y: 135 }, { x: 145, y: 295 }, { x: 455, y: 285 },
+      { x: 285, y: 325 }, { x: 345, y: 325 }, { x: 195, y: 315 }, { x: 405, y: 305 },
+      { x: 225, y: 145 }, { x: 375, y: 135 }, { x: 115, y: 345 }, { x: 485, y: 335 },
+      { x: 255, y: 375 }, { x: 345, y: 375 }, { x: 305, y: 235 }, { x: 165, y: 395 },
+      { x: 435, y: 385 }
+    ]
+  },
+  cactus: {
+    sapling: [
+      { x: 300, y: 290 }, { x: 300, y: 220 }
+    ],
+    small: [
+      { x: 300, y: 190 }, { x: 250, y: 250 }, { x: 350, y: 230 }, { x: 300, y: 290 }
+    ],
+    medium: [
+      { x: 300, y: 160 }, { x: 210, y: 220 }, { x: 390, y: 200 },
+      { x: 210, y: 290 }, { x: 390, y: 270 }, { x: 300, y: 280 },
+      { x: 270, y: 350 }, { x: 330, y: 340 }
+    ],
+    lush: [
+      { x: 300, y: 130 }, { x: 210, y: 190 }, { x: 390, y: 170 },
+      { x: 150, y: 260 }, { x: 450, y: 240 },
+      { x: 300, y: 230 }, { x: 210, y: 290 }, { x: 390, y: 270 },
+      { x: 150, y: 350 }, { x: 450, y: 330 }, { x: 260, y: 360 },
+      { x: 340, y: 350 }, { x: 300, y: 310 }, { x: 220, y: 390 },
+      { x: 380, y: 380 }
+    ],
+    grand: [
+      { x: 300, y: 100 }, { x: 210, y: 160 }, { x: 390, y: 140 },
+      { x: 140, y: 230 }, { x: 460, y: 210 }, { x: 90, y: 300 },
+      { x: 510, y: 280 },
+      { x: 300, y: 190 }, { x: 210, y: 240 }, { x: 390, y: 220 },
+      { x: 140, y: 310 }, { x: 460, y: 290 }, { x: 90, y: 380 },
+      { x: 510, y: 360 }, { x: 250, y: 330 }, { x: 350, y: 320 },
+      { x: 300, y: 270 }, { x: 210, y: 330 }, { x: 390, y: 310 },
+      { x: 260, y: 400 }, { x: 340, y: 390 }, { x: 170, y: 380 },
+      { x: 430, y: 370 }, { x: 300, y: 440 }, { x: 300, y: 360 }
+    ]
+  }
+};
 
 // Draw sprout when a tree has 0 tasks
 function drawSprout(ctx, x, y) {
@@ -157,17 +282,23 @@ function drawSprout(ctx, x, y) {
   ctx.lineWidth = 4;
   ctx.stroke();
 
-  // Sprout Leaf Left
+  // Sprout Leaf Left (Stylized Vector)
   ctx.beginPath();
   ctx.ellipse(x - 5, y - 40, 8, 4, -Math.PI / 4, 0, 2 * Math.PI);
-  ctx.fillStyle = '#6B8E23';
+  ctx.fillStyle = '#8FBC8F';
   ctx.fill();
+  ctx.strokeStyle = '#556B2F';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
 
-  // Sprout Leaf Right
+  // Sprout Leaf Right (Stylized Vector)
   ctx.beginPath();
   ctx.ellipse(x + 10, y - 43, 7, 4, Math.PI / 6, 0, 2 * Math.PI);
   ctx.fillStyle = '#6B8E23';
   ctx.fill();
+  ctx.strokeStyle = '#556B2F';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
 
   // Ground grass bits
   ctx.beginPath();
@@ -180,7 +311,169 @@ function drawSprout(ctx, x, y) {
   ctx.stroke();
 }
 
-// Main fractal tree rendering function
+// Fallback Canvas vector cactus rendering for medium, lush and grand stages
+function drawVectorCactus(ctx, width, height, maxDepth) {
+  ctx.save();
+  
+  // Scale dynamically to 600x600 base coordinates
+  const scale = width / 600;
+  ctx.scale(scale, scale);
+  
+  const mainGreen = '#2E5A27';
+  const lightGreen = '#4E8A43';
+  const shadowGreen = '#1D3B18';
+  const trunkY = 540; // 600 - 60 (soil level in 600px grid)
+
+  function drawPillar(x, y, w, h) {
+    ctx.save();
+    
+    // Draw outer stroke
+    ctx.beginPath();
+    ctx.roundRect(x - w/2, y - h, w, h, w/2);
+    ctx.fillStyle = shadowGreen;
+    ctx.fill();
+    
+    // Draw body
+    ctx.beginPath();
+    ctx.roundRect(x - w/2 + 2, y - h + 2, w - 4, h - 4, (w - 4)/2);
+    const grad = ctx.createLinearGradient(x - w/2, 0, x + w/2, 0);
+    grad.addColorStop(0, mainGreen);
+    grad.addColorStop(0.5, lightGreen);
+    grad.addColorStop(1, shadowGreen);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    
+    // Draw ribs
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 4);
+    ctx.lineTo(x, y - h + w/2);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(x - w/4, y - 4);
+    ctx.lineTo(x - w/4, y - h + w/2 + 5);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(x + w/4, y - 4);
+    ctx.lineTo(x + w/4, y - h + w/2 + 5);
+    ctx.stroke();
+    
+    // Draw tiny needles
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1;
+    for (let ny = y - h + w/2; ny < y - 10; ny += 30) {
+      ctx.beginPath();
+      ctx.moveTo(x - 5, ny);
+      ctx.lineTo(x + 5, ny);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(x - w/4 - 4, ny + 10);
+      ctx.lineTo(x - w/4 + 4, ny + 10);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(x + w/4 - 4, ny + 10);
+      ctx.lineTo(x + w/4 + 4, ny + 10);
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+  }
+
+  // Draw base trunk and side arms based on complexity (coordinates mapped to 600x600 grid)
+  if (maxDepth === 5) {
+    // Medium Cactus: 1 center, 2 side arms
+    ctx.beginPath();
+    ctx.roundRect(220, trunkY - 210, 80, 40, 20);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(210, trunkY - 180, 32, 90);
+    
+    ctx.beginPath();
+    ctx.roundRect(300, trunkY - 230, 90, 40, 20);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(390, trunkY - 200, 32, 80);
+    
+    drawPillar(300, trunkY, 52, 280);
+  } 
+  else if (maxDepth === 6) {
+    // Lush Cactus: 5 columns
+    ctx.beginPath();
+    ctx.roundRect(160, trunkY - 190, 70, 34, 17);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(150, trunkY - 170, 26, 80);
+    
+    ctx.beginPath();
+    ctx.roundRect(210, trunkY - 250, 90, 38, 19);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(210, trunkY - 220, 32, 100);
+    
+    ctx.beginPath();
+    ctx.roundRect(370, trunkY - 210, 80, 34, 17);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(450, trunkY - 190, 26, 90);
+    
+    ctx.beginPath();
+    ctx.roundRect(300, trunkY - 280, 90, 38, 19);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(390, trunkY - 250, 32, 120);
+    
+    drawPillar(300, trunkY, 58, 340);
+  } 
+  else {
+    // Grand Cactus: 7 columns
+    ctx.beginPath();
+    ctx.roundRect(100, trunkY - 150, 80, 30, 15);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(90, trunkY - 130, 24, 70);
+    
+    ctx.beginPath();
+    ctx.roundRect(140, trunkY - 240, 80, 34, 17);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(140, trunkY - 210, 28, 90);
+    
+    ctx.beginPath();
+    ctx.roundRect(210, trunkY - 320, 90, 38, 19);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(210, trunkY - 290, 34, 130);
+    
+    ctx.beginPath();
+    ctx.roundRect(420, trunkY - 170, 90, 30, 15);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(510, trunkY - 150, 24, 80);
+    
+    ctx.beginPath();
+    ctx.roundRect(380, trunkY - 260, 80, 34, 17);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(460, trunkY - 230, 28, 100);
+    
+    ctx.beginPath();
+    ctx.roundRect(300, trunkY - 350, 90, 38, 19);
+    ctx.fillStyle = mainGreen;
+    ctx.fill();
+    drawPillar(390, trunkY - 320, 34, 150);
+    
+    drawPillar(300, trunkY, 64, 400);
+  }
+  
+  ctx.restore();
+}
+
+// Main tree rendering function using pre-loaded images & dynamic vector overlays
 function drawTree(canvas, type, tasks) {
   const ctx = canvas.getContext('2d');
   const width = canvas.width;
@@ -188,35 +481,35 @@ function drawTree(canvas, type, tasks) {
   
   ctx.clearRect(0, 0, width, height);
 
-  let seed = 12345; // Fixed seed for stable look
+  let seed = 12345;
 
   // 0. DRAW BEAUTIFUL LUSH BACKDROP
-  // Sky Gradient
+  // Sky Gradient (Clean and modern)
   const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
-  skyGrad.addColorStop(0, '#EAE2D5'); // Soft warm tea sky
-  skyGrad.addColorStop(0.7, '#FAF6F0'); // Pure linen cream sky bottom
+  skyGrad.addColorStop(0, '#EAE2D5');
+  skyGrad.addColorStop(0.7, '#FAF6F0');
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, width, height);
 
   // Soft Background Hills
-  ctx.fillStyle = '#E8DFD0'; // Distant hill
+  ctx.fillStyle = '#E8DFD0';
   ctx.beginPath();
   ctx.arc(width * 0.25, height - 20, 180, Math.PI, 0, false);
   ctx.fill();
 
-  ctx.fillStyle = '#E3D5CA'; // Mid hill
+  ctx.fillStyle = '#E3D5CA';
   ctx.beginPath();
   ctx.arc(width * 0.75, height - 10, 160, Math.PI, 0, false);
   ctx.fill();
 
   // Soil/Ground area
   const soilGrad = ctx.createLinearGradient(0, height - 60, 0, height);
-  soilGrad.addColorStop(0, '#C6AC93'); // Warm earth soil line
-  soilGrad.addColorStop(1, '#9C846C'); // Deep soil
+  soilGrad.addColorStop(0, '#C6AC93');
+  soilGrad.addColorStop(1, '#9C846C');
   ctx.fillStyle = soilGrad;
   ctx.fillRect(0, height - 60, width, 60);
 
-  // Tiny Grass & Flowers on the ground (lush decor)
+  // Tiny Grass & Flowers on the ground
   for (let i = 0; i < width; i += 12) {
     const grassHeight = 6 + seededRandom(seed++) * 10;
     ctx.beginPath();
@@ -255,362 +548,296 @@ function drawTree(canvas, type, tasks) {
     return;
   }
 
-  // Determine complexity based on tasks count (70% scaled thresholds)
-  let maxDepth = 3; // sapling default
-  let sizeFactor = 0;
+  // Determine stage based on tasks count (70% scaled thresholds)
+  let stage = 'sapling';
+  let maxDepth = 3; 
 
-  if (tasks.length === 1) {
-    maxDepth = 3; // Sapling (深さ3)
-    sizeFactor = 15;
-  } else if (tasks.length === 2) {
-    maxDepth = 4; // Small Tree (深さ4)
-    sizeFactor = 30;
-  } else if (tasks.length >= 3 && tasks.length <= 5) {
-    maxDepth = 5; // Medium Tree (深さ5)
-    sizeFactor = 50;
-  } else if (tasks.length >= 6 && tasks.length <= 10) {
-    maxDepth = 6; // Lush Tree (深さ6)
-    sizeFactor = 70;
+  if (tasks.length === 1 || tasks.length === 2) {
+    stage = 'sapling';
+    maxDepth = 3;
+  } else if (tasks.length === 3 || tasks.length === 4) {
+    stage = 'small';
+    maxDepth = 4;
+  } else if (tasks.length >= 5 && tasks.length <= 8) {
+    stage = 'medium';
+    maxDepth = 5;
+  } else if (tasks.length >= 9 && tasks.length <= 15) {
+    stage = 'lush';
+    maxDepth = 6;
   } else {
-    maxDepth = 7; // Grand Tree (11個以上, 深さ7)
-    sizeFactor = 90;
+    stage = 'grand';
+    maxDepth = 7;
   }
 
-  const leafCoordinates = [];
-  const innerBranchCoordinates = [];
+  const coordinates = TREE_FRUIT_COORDINATES[type][stage] || [];
+  const scaleX = width / 600;
+  const scaleY = height / 600;
 
-  // Setup styles by type
-  let branchColor = '#5C4033'; // Deep organic brown
-  if (type === 'cherry') branchColor = '#4A3C31';
-  if (type === 'cactus') branchColor = '#2E5A27'; // Cactus body color
+  const isCactusVector = type === 'cactus' && (stage === 'medium' || stage === 'lush' || stage === 'grand');
 
-  // Recursive branch generator (with 3-way splits for volume)
-  function branch(x1, y1, angle, depth, currentLength, currentWidth) {
-    const x2 = x1 + Math.cos(angle * Math.PI / 180) * currentLength;
-    const y2 = y1 + Math.sin(angle * Math.PI / 180) * currentLength;
-
-    // Render branch
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.strokeStyle = branchColor;
-    ctx.lineWidth = currentWidth;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // If near leaf nodes (depth <= 1), save coordinates to multiply leaves density
-    if (depth <= 1) {
-      leafCoordinates.push({ x: x2, y: y2, angle: angle });
-    }
-    if (depth > 1 && depth <= 3) {
-      innerBranchCoordinates.push({ x: x2, y: y2, angle: angle });
-    }
-
-    if (depth === 0) return;
-
-    // Branch parameters w/ deterministic randomness
-    const randAngleSpread = 22 + seededRandom(seed++) * 15;
-    const lengthShrink = 0.72 + seededRandom(seed++) * 0.1;
-    const widthShrink = 0.68 + seededRandom(seed++) * 0.05;
-
-    // Left and Right branches
-    branch(x2, y2, angle - randAngleSpread, depth - 1, currentLength * lengthShrink, currentWidth * widthShrink);
-    branch(x2, y2, angle + randAngleSpread, depth - 1, currentLength * lengthShrink, currentWidth * widthShrink);
-
-    // 38% chance to grow a third center/minor branch for a very lush volume
-    if (depth > 1 && seededRandom(seed++) < 0.38) {
-      const centerAngle = angle + (seededRandom(seed++) - 0.5) * 12;
-      branch(x2, y2, centerAngle, depth - 1, currentLength * lengthShrink * 0.85, currentWidth * widthShrink * 0.8);
-    }
-  }
-
-  // Start trunk variables
-  const startX = width / 2;
-  const startY = height - 60;
-  const initialAngle = -90; // Upwards
-  
-  let initialLength = 90 + sizeFactor;
-  let initialWidth = 4 + (maxDepth * 1.5);
-
-  if (type === 'cactus') {
-    initialLength = 95;
-    initialWidth = 26;
-  }
-
-  // Draw wood structure
-  branch(startX, startY, initialAngle, maxDepth, initialLength, initialWidth);
-
-  // 1. Draw rich background foliage (leaves/petals/spikes) on ALL leaf coordinates to make the tree look lush
-  leafCoordinates.forEach((coord, idx) => {
-    const rSeed = seed + idx;
-    
-    ctx.save();
-    ctx.translate(coord.x, coord.y);
-    
-    if (type === 'apple') {
-      // Draw a dense cluster of 3-4 green leaves for thickness
-      const leavesCount = 3 + Math.floor(seededRandom(rSeed) * 2); // 3 or 4 leaves
-      const leafColorPalette = ['#556B2F', '#6B8E23', '#4A5D29']; // Mix of organic greens
-      for (let i = 0; i < leavesCount; i++) {
-        ctx.save();
-        const leafAngle = ((i - (leavesCount - 1) / 2) * 22 + (seededRandom(rSeed + i) - 0.5) * 15) * Math.PI / 180;
-        ctx.rotate(leafAngle);
-        ctx.beginPath();
-        ctx.ellipse(0, -5, 13, 7, 0, 0, 2 * Math.PI);
-        ctx.fillStyle = leafColorPalette[Math.floor(seededRandom(rSeed + i * 2) * leafColorPalette.length)];
-        ctx.fill();
-        ctx.strokeStyle = '#3E4F22';
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-        ctx.restore();
-      }
-    } else if (type === 'cherry') {
-      // Draw a very rich cherry blossom petal cluster (fluffy blooming sakura)
-      const flowersCount = 3 + Math.floor(seededRandom(rSeed) * 3); // 3 to 5 small petals
-      for (let i = 0; i < flowersCount; i++) {
-        ctx.save();
-        const offsetDist = seededRandom(rSeed + i) * 8;
-        const offsetAngle = seededRandom(rSeed + i * 2) * Math.PI * 2;
-        ctx.translate(Math.cos(offsetAngle) * offsetDist, Math.sin(offsetAngle) * offsetDist);
-        
-        ctx.beginPath();
-        ctx.arc(0, 0, 6, 0, 2 * Math.PI);
-        ctx.fillStyle = seededRandom(rSeed + i) > 0.4 ? 'rgba(255, 192, 203, 0.85)' : 'rgba(255, 182, 193, 0.9)'; // Variation of pink
-        ctx.fill();
-        ctx.restore();
-      }
-    } else if (type === 'cactus') {
-      // Spiky cactus needles cluster + little round side cactus bumps
-      ctx.fillStyle = '#2E5A27'; // Dark green cactus stem bump
-      ctx.beginPath();
-      ctx.arc(0, 0, 8, 0, 2 * Math.PI);
-      ctx.fill();
-
-      ctx.strokeStyle = '#E2E8F0';
-      ctx.lineWidth = 1.3;
-      const spikes = 4 + Math.floor(seededRandom(rSeed) * 3);
-      for (let i = 0; i < spikes; i++) {
-        const spikeAngle = ((i - (spikes - 1) / 2) * 22 + (seededRandom(rSeed + i) - 0.5) * 8) * Math.PI / 180;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.sin(spikeAngle) * 11, -Math.cos(spikeAngle) * 11);
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
-  });
-
-  // 1.5. Draw slightly smaller foliage on INNER branches to fill the center space (eliminate sparseness) (v4)
-  innerBranchCoordinates.forEach((coord, idx) => {
-    const rSeed = seed + idx * 3;
-    if (seededRandom(rSeed) > 0.45) return;
-
-    ctx.save();
-    ctx.translate(coord.x, coord.y);
-
-    if (type === 'apple') {
-      ctx.save();
-      const leafAngle = (seededRandom(rSeed) - 0.5) * 60 * Math.PI / 180;
-      ctx.rotate(leafAngle);
-      ctx.beginPath();
-      ctx.ellipse(0, -3, 9, 5, 0, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(85, 107, 47, 0.75)';
-      ctx.fill();
-      ctx.restore();
-    } else if (type === 'cherry') {
-      ctx.beginPath();
-      ctx.arc(0, 0, 4, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(255, 192, 203, 0.6)';
-      ctx.fill();
-    } else if (type === 'cactus') {
-      ctx.fillStyle = 'rgba(46, 90, 39, 0.8)';
-      ctx.beginPath();
-      ctx.arc(0, 0, 5, 0, 2 * Math.PI);
-      ctx.fill();
-    }
-    ctx.restore();
-  });
-
-  // 2. Distribute tasks onto accumulated coordinates (drawn on top of background foliage)
-  if (leafCoordinates.length > 0) {
-    // Map tasks to endpoints
-    const step = Math.floor(leafCoordinates.length / tasks.length) || 1;
-    
+  const drawOverlayElements = () => {
+    const activeCoords = [];
     tasks.forEach((task, idx) => {
-      // Pick coordinate from array
-      const coordIdx = Math.min((idx * step) % leafCoordinates.length, leafCoordinates.length - 1);
-      const coord = leafCoordinates[coordIdx];
+      const coordRaw = coordinates[idx % coordinates.length] || { x: 300, y: 300 };
+      const coord = {
+        x: coordRaw.x * scaleX,
+        y: coordRaw.y * scaleY
+      };
+      activeCoords.push({ x: coord.x, y: coord.y });
       
-      if (coord) {
-        drawLeafOrnament(ctx, coord.x, coord.y, type, task.status);
-      }
+      // Render dynamically scaled fruits matching canvas resolution
+      ctx.save();
+      ctx.translate(coord.x, coord.y);
+      ctx.scale(scaleX, scaleY);
+      drawLeafOrnament(ctx, 0, 0, type, task.status);
+      ctx.restore();
     });
-  }
+    lastTreeCoordinates = activeCoords;
+  };
 
-  // Save computed leaf coordinates to find spawn points for done animation
-  lastTreeCoordinates = leafCoordinates;
+  if (isCactusVector) {
+    drawVectorCactus(ctx, width, height, maxDepth);
+    drawOverlayElements();
+  } else {
+    const imagePath = `assets/${type}_${stage}.png`;
+    const redrawCallback = () => {
+      if (canvas.isConnected) {
+        drawTree(canvas, type, tasks);
+      }
+    };
+    
+    const img = getOrLoadImage(imagePath, redrawCallback);
+    if (img) {
+      ctx.drawImage(img, 0, 0, width, height);
+      drawOverlayElements();
+    } else {
+      ctx.save();
+      ctx.fillStyle = '#8C8275';
+      ctx.font = `${14 * scaleX}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('画像をロード中...', width / 2, height / 2);
+      ctx.restore();
+    }
+  }
 }
 
-// Draw leaf, bud, or flower/fruit depending on status
+// Draw leaf, bud, or flower/fruit depending on status (Refreshed for Modern Vector Theme)
 function drawLeafOrnament(ctx, x, y, type, status) {
+  ctx.save();
+
   if (status === 'todo') {
-    // 1. TODO: Green leaf
+    // 1. TODO: Modern Green leaf
     ctx.beginPath();
-    ctx.ellipse(x, y, 10, 5, Math.PI / 4, 0, 2 * Math.PI);
-    ctx.fillStyle = '#6B8E23'; // Olive-ish green
+    ctx.ellipse(x, y, 11, 5.5, Math.PI / 4, 0, 2 * Math.PI);
+    
+    const leafGrad = ctx.createLinearGradient(x - 5, y - 5, x + 5, y + 5);
+    leafGrad.addColorStop(0, '#8FBC8F');
+    leafGrad.addColorStop(1, '#556B2F');
+    ctx.fillStyle = leafGrad;
     ctx.fill();
-    ctx.strokeStyle = '#556B2F';
+    
+    ctx.strokeStyle = '#3E4F22';
     ctx.lineWidth = 1;
     ctx.stroke();
     
-    // Leaf vein line
+    // Vein line
     ctx.beginPath();
-    ctx.moveTo(x - 5, y - 5);
+    ctx.moveTo(x - 6, y - 6);
     ctx.lineTo(x + 5, y + 5);
-    ctx.strokeStyle = '#556B2F';
+    ctx.strokeStyle = '#3E4F22';
     ctx.stroke();
   } 
   
   else if (status === 'doing') {
     // 2. DOING: Colored Bud
-    let budColor = '#FEF3C7'; // Yellow bud default
+    let budColorStart = '#FEF3C7';
+    let budColorEnd = '#F59E0B';
     let strokeColor = '#D97706';
+    
     if (type === 'cherry') {
-      budColor = '#FFC0CB'; // Pink cherry bud
-      strokeColor = '#FF69B4';
+      budColorStart = '#FFF1F2';
+      budColorEnd = '#FDA4AF';
+      strokeColor = '#F43F5E';
     } else if (type === 'cactus') {
-      budColor = '#FDE047'; // Bright yellow cactus bud
+      budColorStart = '#FEF9C3';
+      budColorEnd = '#FACC15';
       strokeColor = '#CA8A04';
     }
 
     ctx.beginPath();
-    // Drop shaped bud
-    ctx.moveTo(x, y - 8);
-    ctx.bezierCurveTo(x + 5, y - 8, x + 6, y, x, y + 4);
-    ctx.bezierCurveTo(x - 6, y, x - 5, y - 8, x, y - 8);
-    ctx.fillStyle = budColor;
+    ctx.moveTo(x, y - 9);
+    ctx.bezierCurveTo(x + 6, y - 9, x + 7, y + 1, x, y + 6);
+    ctx.bezierCurveTo(x - 7, y + 1, x - 6, y - 9, x, y - 9);
+    
+    const budGrad = ctx.createRadialGradient(x - 2, y - 3, 1, x, y, 8);
+    budGrad.addColorStop(0, budColorStart);
+    budGrad.addColorStop(1, budColorEnd);
+    
+    ctx.fillStyle = budGrad;
     ctx.fill();
     ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.2;
     ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.ellipse(x - 4, y + 6, 4, 2, -Math.PI/6, 0, 2*Math.PI);
+    ctx.fillStyle = '#556B2F';
+    ctx.fill();
   } 
   
   else if (status === 'done') {
-    // 3. DONE: Bloom / Fruit (Twin / Multi-layered for high achievement)
+    // 3. DONE: Bloom / Fruit (Highly stylized premium vector graphics)
     if (type === 'apple') {
-      // Draw Twin Apples (small and delicate, hanging side-by-side)
-      ctx.save();
-      // Left Apple
-      ctx.beginPath();
-      ctx.arc(x - 5, y + 4, 6, 0, 2 * Math.PI);
-      ctx.fillStyle = '#FF3B30'; // Apple red
-      ctx.fill();
+      const drawAppleItem = (cx, cy, radius, rotateAngle) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rotateAngle);
+
+        ctx.beginPath();
+        ctx.moveTo(0, -radius * 0.4);
+        ctx.bezierCurveTo(-radius * 0.8, -radius * 1.2, -radius * 1.3, -radius * 0.5, -radius * 1.3, radius * 0.3);
+        ctx.bezierCurveTo(-radius * 1.3, radius * 1.1, -radius * 0.7, radius * 0.95, 0, radius * 0.9);
+        ctx.bezierCurveTo(radius * 0.7, radius * 0.95, radius * 1.3, radius * 1.1, radius * 1.3, radius * 0.3);
+        ctx.bezierCurveTo(radius * 1.3, -radius * 0.5, radius * 0.8, -radius * 1.2, 0, -radius * 0.4);
+        
+        const grad = ctx.createRadialGradient(-radius * 0.3, -radius * 0.3, radius * 0.2, 0, 0, radius * 1.2);
+        grad.addColorStop(0, '#FF6B6B');
+        grad.addColorStop(0.7, '#EE5253');
+        grad.addColorStop(1, '#8B0000');
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.strokeStyle = '#5C1D1D';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(-radius * 0.4, -radius * 0.3, radius * 0.3, radius * 0.15, -Math.PI / 4, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -radius * 0.4);
+        ctx.quadraticCurveTo(radius * 0.3, -radius * 1.1, radius * 0.5, -radius * 1.2);
+        ctx.strokeStyle = '#5C4033';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(radius * 0.2, -radius * 0.85, radius * 0.4, radius * 0.18, -Math.PI / 6, 0, 2 * Math.PI);
+        ctx.fillStyle = '#6B8E23';
+        ctx.fill();
+        ctx.strokeStyle = '#3E4F22';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        ctx.restore();
+      };
       
-      // Right Apple
-      ctx.beginPath();
-      ctx.arc(x + 5, y + 4, 6, 0, 2 * Math.PI);
-      ctx.fillStyle = '#FF453A'; // Slightly lighter red
-      ctx.fill();
-
-      // Stem of apples (Y-shaped)
-      ctx.beginPath();
-      ctx.moveTo(x, y - 4);
-      ctx.lineTo(x - 5, y + 4);
-      ctx.moveTo(x, y - 4);
-      ctx.lineTo(x + 5, y + 4);
-      ctx.strokeStyle = '#5C4033';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // Tiny green leaf
-      ctx.beginPath();
-      ctx.ellipse(x + 3, y - 4, 3, 1.5, Math.PI / 4, 0, 2 * Math.PI);
-      ctx.fillStyle = '#556B2F';
-      ctx.fill();
-      ctx.restore();
+      drawAppleItem(x - 6, y + 4, 7.5, -Math.PI/12);
+      drawAppleItem(x + 6, y + 2, 7.0, Math.PI/8);
     } 
     
     else if (type === 'cherry') {
-      // Draw Twin Cherries (fruit instead of flower for better completion impact)
-      ctx.save();
-      // Left Cherry
       ctx.beginPath();
-      ctx.arc(x - 6, y + 6, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = '#D90429'; // Deep cherry red
-      ctx.fill();
-      // Shine
-      ctx.beginPath();
-      ctx.arc(x - 4, y + 4, 1.2, 0, 2 * Math.PI);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-
-      // Right Cherry
-      ctx.beginPath();
-      ctx.arc(x + 6, y + 6, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = '#EF233C'; // Bright cherry red
-      ctx.fill();
-      // Shine
-      ctx.beginPath();
-      ctx.arc(x + 8, y + 4, 1.2, 0, 2 * Math.PI);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-
-      // Green Y-shaped Stem
-      ctx.beginPath();
-      ctx.moveTo(x, y - 2);
-      ctx.lineTo(x - 6, y + 6);
-      ctx.moveTo(x, y - 2);
-      ctx.lineTo(x + 6, y + 6);
-      ctx.strokeStyle = '#2D6A4F';
-      ctx.lineWidth = 1.2;
+      ctx.moveTo(x, y - 6);
+      ctx.quadraticCurveTo(x - 5, y - 2, x - 8, y + 6);
+      ctx.moveTo(x, y - 6);
+      ctx.quadraticCurveTo(x + 3, y - 2, x + 8, y + 4);
+      ctx.strokeStyle = '#3A6B35';
+      ctx.lineWidth = 1.6;
       ctx.stroke();
-      ctx.restore();
+
+      ctx.beginPath();
+      ctx.ellipse(x + 3, y - 8, 4, 2, -Math.PI/6, 0, 2 * Math.PI);
+      ctx.fillStyle = '#4D8A43';
+      ctx.fill();
+
+      const drawCherryItem = (cx, cy, radius) => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+        
+        const grad = ctx.createRadialGradient(cx - radius * 0.25, cy - radius * 0.25, radius * 0.2, cx, cy, radius);
+        grad.addColorStop(0, '#FF4D6D');
+        grad.addColorStop(0.7, '#C71585');
+        grad.addColorStop(1, '#5C0632');
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.strokeStyle = '#4A0528';
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cx - radius * 0.35, cy - radius * 0.35, radius * 0.2, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fill();
+        ctx.restore();
+      };
+
+      drawCherryItem(x - 8, y + 6, 6.5);
+      drawCherryItem(x + 8, y + 4, 6.0);
     } 
     
     else if (type === 'cactus') {
-      // Draw Multi-layered spiky golden flower next to a purple fruit
-      ctx.save();
-      // Draw small purple fruit base first
-      ctx.beginPath();
-      ctx.arc(x - 4, y + 4, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = '#7209B7'; // Rich purple
-      ctx.fill();
-
-      // Draw Flower base offset
-      const fx = x + 3;
-      const fy = y - 2;
-
-      // Layer 1: Outer Orange Spikes
-      ctx.strokeStyle = '#FF8C00';
-      ctx.lineWidth = 2;
+      const fx = x;
+      const fy = y;
+      
+      ctx.fillStyle = '#FF5E00';
+      ctx.strokeStyle = '#CC3F00';
+      ctx.lineWidth = 0.8;
+      
       for (let i = 0; i < 8; i++) {
-        const angle = (i * Math.PI) / 4;
+        ctx.save();
+        ctx.translate(fx, fy);
+        ctx.rotate((i * Math.PI) / 4);
+        
         ctx.beginPath();
-        ctx.moveTo(fx, fy);
-        ctx.lineTo(fx + Math.cos(angle) * 11, fy + Math.sin(angle) * 11);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-4, -13);
+        ctx.lineTo(0, -16);
+        ctx.lineTo(4, -13);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
+        ctx.restore();
       }
 
-      // Layer 2: Inner Yellow Spikes
-      ctx.strokeStyle = '#FFD700';
-      ctx.lineWidth = 1.3;
-      for (let i = 0; i < 6; i++) {
-        const angle = (i * Math.PI) / 3 + Math.PI / 6;
+      ctx.fillStyle = '#FFD700';
+      ctx.strokeStyle = '#CA8A04';
+      ctx.lineWidth = 0.8;
+      
+      for (let i = 0; i < 8; i++) {
+        ctx.save();
+        ctx.translate(fx, fy);
+        ctx.rotate((i * Math.PI) / 4 + Math.PI / 8);
+        
         ctx.beginPath();
-        ctx.moveTo(fx, fy);
-        ctx.lineTo(fx + Math.cos(angle) * 7, fy + Math.sin(angle) * 7);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-2.5, -9);
+        ctx.lineTo(0, -11);
+        ctx.lineTo(2.5, -9);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
+        ctx.restore();
       }
 
-      // Center White Dot
       ctx.beginPath();
-      ctx.arc(fx, fy, 2.5, 0, 2 * Math.PI);
+      ctx.arc(fx, fy, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = '#FFFFE0';
+      ctx.fill();
+      ctx.strokeStyle = '#D97706';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.arc(fx - 1, fy - 1, 1.2, 0, 2 * Math.PI);
       ctx.fillStyle = '#FFFFFF';
       ctx.fill();
-      ctx.restore();
     }
   }
-}
 
 // ----------------------------------------------------
 // UI CONTROLS & EVENT BINDINGS
