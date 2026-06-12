@@ -839,6 +839,9 @@ function drawLeafOrnament(ctx, x, y, type, status) {
     }
   }
 
+  ctx.restore();
+}
+
 // ----------------------------------------------------
 // UI CONTROLS & EVENT BINDINGS
 // ----------------------------------------------------
