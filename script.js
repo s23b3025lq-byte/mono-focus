@@ -93,7 +93,8 @@ const elements = {
   // Shop Modal
   shopModal: document.getElementById('shop-modal'),
   closeShopBtn: document.getElementById('close-shop-btn'),
-  buyDecorBtns: document.querySelectorAll('.btn-buy')
+  buyDecorBtns: document.querySelectorAll('.btn-buy'),
+  waterTreeBtn: document.getElementById('water-tree-btn')
 };
 
 // Particle Animation Variables for Task Completion (v4)
@@ -178,6 +179,7 @@ function playSynthSound(type = 'default') {
     let frequencies = [523.25]; // C5 default tick
     let duration = 0.12;
     let waveType = 'sine';
+    let noteSpacing = 0.07;
     
     if (type === 'success') {
       frequencies = [523.25, 659.25, 783.99, 1046.50]; // Sweet ascending chime C5, E5, G5, C6
@@ -188,6 +190,24 @@ function playSynthSound(type = 'default') {
     } else if (type === 'harvest') {
       frequencies = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]; // Joyful arpeggio C5 to G6
       duration = 0.55;
+    } else if (type === 'water') {
+      frequencies = [587.33, 698.46, 880.00, 1046.50, 1396.91]; // Fresh water cascade D5, F5, A5, C6, F6
+      duration = 0.45;
+      noteSpacing = 0.06;
+    } else if (type === 'bird') {
+      frequencies = [1318.51, 1567.98, 1318.51, 1975.53]; // Light bird chirping E6, G6, E6, B6
+      duration = 0.30;
+      noteSpacing = 0.05;
+      waveType = 'triangle';
+    } else if (type === 'fountain') {
+      frequencies = [783.99, 987.77, 1174.66, 1567.98]; // Splashing bubbles G5, B5, D6, G6
+      duration = 0.35;
+      noteSpacing = 0.04;
+    } else if (type === 'bench') {
+      frequencies = [220.00, 146.83]; // Cozy woody thud A3 -> D3
+      duration = 0.15;
+      noteSpacing = 0.08;
+      waveType = 'triangle';
     }
     
     const now = ctx.currentTime;
@@ -198,16 +218,16 @@ function playSynthSound(type = 'default') {
       const gainNode = ctx.createGain();
       
       osc.type = waveType;
-      osc.frequency.setValueAtTime(freq, now + index * 0.07);
+      osc.frequency.setValueAtTime(freq, now + index * noteSpacing);
       
-      gainNode.gain.setValueAtTime(0.12, now + index * 0.07);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + index * 0.07 + noteTime);
+      gainNode.gain.setValueAtTime(0.12, now + index * noteSpacing);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + index * noteSpacing + noteTime);
       
       osc.connect(gainNode);
       gainNode.connect(ctx.destination);
       
-      osc.start(now + index * 0.07);
-      osc.stop(now + index * 0.07 + noteTime);
+      osc.start(now + index * noteSpacing);
+      osc.stop(now + index * noteSpacing + noteTime);
     });
   } catch (e) {
     console.warn("Synth audio feedback context could not initialize:", e);
@@ -1274,6 +1294,9 @@ function renderTreeDetail() {
 
   // Redraw Canvas representation
   drawTree(elements.treeCanvas, tree.type, tree.tasks);
+  
+  // Check daily watering status
+  checkWaterStatus();
 }
 
 function editTreeName() {
@@ -1807,6 +1830,59 @@ function spawnParticles(x, y, treeType) {
   animateParticles();
 }
 
+function spawnWaterParticles() {
+  activeParticles = [];
+  const canvas = elements.treeCanvas;
+  const width = canvas.width;
+  
+  // Spawn 35 falling water droplets from top
+  for (let i = 0; i < 35; i++) {
+    activeParticles.push({
+      x: Math.random() * width,
+      y: Math.random() * -120 - 10,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: Math.random() * 2.5 + 4.5,
+      gravity: 0.12,
+      alpha: 1.0,
+      size: 4 + Math.random() * 4,
+      rotation: 0,
+      vRotation: 0,
+      color: '#38BDF8',
+      shape: 'water'
+    });
+  }
+
+  if (particleAnimationId) cancelAnimationFrame(particleAnimationId);
+  animateParticles();
+}
+
+function spawnDecorParticles(x, y, color, type) {
+  activeParticles = [];
+  const count = type === 'water' ? 22 : 12;
+  
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.random() - 0.5) * Math.PI * 0.6 - Math.PI / 2; // spray upwards
+    const speed = Math.random() * 3 + (type === 'water' ? 4 : 2);
+    
+    activeParticles.push({
+      x: x,
+      y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      gravity: type === 'water' ? 0.18 : 0.04, // water drops fall faster, feathers float
+      alpha: 1.0,
+      size: type === 'water' ? (3 + Math.random() * 4) : (5 + Math.random() * 6),
+      rotation: Math.random() * Math.PI * 2,
+      vRotation: (Math.random() - 0.5) * 0.15,
+      color: color,
+      shape: type === 'water' ? 'water' : (type === 'feather' ? 'feather' : 'sparkle')
+    });
+  }
+
+  if (particleAnimationId) cancelAnimationFrame(particleAnimationId);
+  animateParticles();
+}
+
 function animateParticles() {
   const canvas = elements.treeCanvas;
   const ctx = canvas.getContext('2d');
@@ -1831,13 +1907,46 @@ function animateParticles() {
       ctx.save();
       ctx.globalAlpha = p.alpha;
       ctx.translate(p.x, p.y);
-      ctx.rotate(p.rotation);
       ctx.fillStyle = p.color;
 
-      ctx.beginPath();
-      // Draw organic petal-like shape
-      ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, 2 * Math.PI);
-      ctx.fill();
+      if (p.shape === 'water') {
+        // Draw droplet shape (tear drop)
+        ctx.beginPath();
+        ctx.moveTo(0, -p.size);
+        ctx.bezierCurveTo(p.size * 0.5, -p.size * 0.3, p.size * 0.5, p.size * 0.6, 0, p.size);
+        ctx.bezierCurveTo(-p.size * 0.5, p.size * 0.6, -p.size * 0.5, -p.size * 0.3, 0, -p.size);
+        ctx.closePath();
+        ctx.fill();
+      } else if (p.shape === 'feather') {
+        // Draw feather/leaf-like flat vector shape
+        ctx.rotate(p.rotation);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size, p.size * 0.4, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(-p.size, 0);
+        ctx.lineTo(p.size, 0);
+        ctx.stroke();
+      } else if (p.shape === 'sparkle') {
+        // Draw 4-point star for fountain sparkle
+        ctx.rotate(p.rotation);
+        ctx.beginPath();
+        ctx.moveTo(0, -p.size);
+        ctx.quadraticCurveTo(0, 0, p.size, 0);
+        ctx.quadraticCurveTo(0, 0, 0, p.size);
+        ctx.quadraticCurveTo(0, 0, -p.size, 0);
+        ctx.quadraticCurveTo(0, 0, 0, -p.size);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Default: organic petal/leaf
+        ctx.rotate(p.rotation);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, 2 * Math.PI);
+        ctx.fill();
+      }
       ctx.restore();
     }
   });
@@ -1918,8 +2027,98 @@ elements.treeNameInput.addEventListener('keydown', (e) => {
   }
 });
 
+// ----------------------------------------------------
+// DAILY WATERING & DECOR INTERACTION (v5)
+// ----------------------------------------------------
+
+function getTodayDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function checkWaterStatus() {
+  if (!elements.waterTreeBtn) return;
+  
+  const lastWatered = localStorage.getItem('last_watered_date') || '';
+  const today = getTodayDateString();
+  
+  if (lastWatered === today) {
+    elements.waterTreeBtn.textContent = '💦 潤い中';
+    elements.waterTreeBtn.classList.add('disabled');
+    elements.waterTreeBtn.disabled = true;
+  } else {
+    elements.waterTreeBtn.textContent = '💦 水やり';
+    elements.waterTreeBtn.classList.remove('disabled');
+    elements.waterTreeBtn.disabled = false;
+  }
+}
+
+function waterTree() {
+  const lastWatered = localStorage.getItem('last_watered_date') || '';
+  const today = getTodayDateString();
+  
+  if (lastWatered === today) return;
+  
+  // Save date
+  localStorage.setItem('last_watered_date', today);
+  
+  // Award coins
+  state.coins += 50;
+  localStorage.setItem('garden_focus_coins', state.coins);
+  updateCoinCount();
+  
+  // Update button in UI
+  checkWaterStatus();
+  
+  // Play fresh sound & rain animation
+  playSynthSound('water');
+  spawnWaterParticles();
+  
+  alert("💦 木に水をあげました！\n🎁 デイリーお世話報酬として 【 50 🍒 】 を獲得しました！");
+}
+
+function handleCanvasClick(e) {
+  const canvas = elements.treeCanvas;
+  const rect = canvas.getBoundingClientRect();
+  
+  // Calculate relative 600x600 coordinates
+  const clickX = ((e.clientX - rect.left) / rect.width) * 600;
+  const clickY = ((e.clientY - rect.top) / rect.height) * 600;
+  
+  // 1. Birdhouse (🐦) - X: 390〜450, Y: 380〜450 (Based on drawDecorations bx=420, by=430)
+  if (state.decorations.includes('birdhouse') && clickX >= 390 && clickX <= 450 && clickY >= 380 && clickY <= 450) {
+    playSynthSound('bird');
+    spawnDecorParticles(420, 420, '#60A5FA', 'feather');
+    return;
+  }
+  
+  // 2. Beautiful Fountain (⛲) - X: 70〜170, Y: 450〜545 (Based on fx=120, fy=540)
+  if (state.decorations.includes('fountain') && clickX >= 70 && clickX <= 170 && clickY >= 450 && clickY <= 545) {
+    playSynthSound('fountain');
+    spawnDecorParticles(120, 470, '#38BDF8', 'water');
+    return;
+  }
+  
+  // 3. Bench (🪑) - X: 430〜530, Y: 490〜545 (Based on bx=480, by=540)
+  if (state.decorations.includes('bench') && clickX >= 430 && clickX <= 530 && clickY >= 490 && clickY <= 545) {
+    playSynthSound('bench');
+    spawnDecorParticles(480, 520, '#DDB892', 'sparkle');
+    return;
+  }
+}
+
+// Event bindings for daily watering & canvas interactions
+if (elements.waterTreeBtn) {
+  elements.waterTreeBtn.addEventListener('click', waterTree);
+}
+if (elements.treeCanvas) {
+  elements.treeCanvas.addEventListener('click', handleCanvasClick);
+  elements.treeCanvas.style.cursor = 'pointer';
+}
+
 // Preload all assets to prevent image load lags
 preloadAllImages();
 
 // Initialize Garden view on load
 renderGarden();
+checkWaterStatus();

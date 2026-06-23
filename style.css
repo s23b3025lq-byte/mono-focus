@@ -916,3 +916,41 @@ header {
   border-color: transparent !important;
   box-shadow: none !important;
 }
+
+/* Water button styling */
+.water-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #E0F2FE; /* Pale sky blue */
+  color: #0369A1; /* Deep sky blue */
+  border: 1px solid rgba(3, 105, 161, 0.15);
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.08);
+}
+
+.water-btn:hover:not(.disabled) {
+  background-color: #BAE6FD;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.15);
+}
+
+.water-btn:active:not(.disabled) {
+  transform: translateY(0) scale(0.96);
+}
+
+.water-btn.disabled {
+  background-color: rgba(46, 42, 37, 0.05) !important;
+  color: rgba(46, 42, 37, 0.3) !important;
+  cursor: not-allowed !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
