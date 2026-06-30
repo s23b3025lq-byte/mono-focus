@@ -954,3 +954,47 @@ header {
   transform: none !important;
 }
 
+/* Focus timer styling */
+.timer-btn {
+  background-color: rgba(46, 42, 37, 0.05) !important;
+  color: #2E2A25 !important;
+  border: 1px solid rgba(46, 42, 37, 0.1) !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.timer-btn:hover {
+  background-color: #2E2A25 !important;
+  color: #FAF6F0 !important;
+  border-color: transparent !important;
+  transform: translateY(-1px);
+}
+
+.timer-btn:active {
+  transform: scale(0.96);
+}
+
+/* Digital clock pulse effect during countdown */
+#focus-time-display.ticking {
+  animation: timerPulse 2s infinite ease-in-out;
+}
+
+@keyframes timerPulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+

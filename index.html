@@ -288,6 +288,21 @@
     </div>
   </div>
 
+  <!-- 7. FOCUS TIMER OVERLAY (v6) -->
+  <div id="focus-timer-overlay" class="modal-overlay hidden" style="background-color: rgba(250, 246, 240, 0.98); z-index: 2000;">
+    <div class="modal-content" style="max-width: 480px; text-align: center; background: transparent; border: none; box-shadow: none; animation: none;">
+      <h2 id="focus-task-name" class="modal-title" style="font-size: 1.6rem; font-family: 'Outfit', sans-serif; letter-spacing: -0.04em; margin-bottom: 2rem; color: #2E2A25;">タスクに集中しています...</h2>
+      <div id="focus-time-display" style="font-family: 'Outfit', sans-serif; font-size: 6rem; font-weight: 900; letter-spacing: -0.06em; color: #2E2A25; margin-bottom: 2.5rem; user-select: none;">25:00</div>
+      
+      <!-- Demo Fast-Forward Button -->
+      <button id="timer-fastforward-btn" class="text-button" style="margin-bottom: 2rem; display: inline-block; color: #8C8275; border: 1px dashed rgba(140, 130, 117, 0.3); padding: 0.4rem 0.8rem; border-radius: 8px;" title="デモ用にタイマーを10秒にスキップ">⏩ デモ用スキップ (10秒に短縮)</button>
+      
+      <div style="display: flex; justify-content: center;">
+        <button id="cancel-timer-btn" class="btn-organic" style="background-color: #8C8275; padding: 0.6rem 1.8rem; font-size: 0.9rem;">諦める</button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>

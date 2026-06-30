@@ -208,6 +208,11 @@ function playSynthSound(type = 'default') {
       duration = 0.15;
       noteSpacing = 0.08;
       waveType = 'triangle';
+    } else if (type === 'tick') {
+      frequencies = [600, 500]; // Very short mechanical tick sound
+      duration = 0.015;
+      noteSpacing = 0.005;
+      waveType = 'sine';
     }
     
     const now = ctx.currentTime;
@@ -220,7 +225,11 @@ function playSynthSound(type = 'default') {
       osc.type = waveType;
       osc.frequency.setValueAtTime(freq, now + index * noteSpacing);
       
-      gainNode.gain.setValueAtTime(0.12, now + index * noteSpacing);
+      let volume = 0.12;
+      if (type === 'tick') {
+        volume = 0.015; // Extremely quiet tick for counting seconds comfortably
+      }
+      gainNode.gain.setValueAtTime(volume, now + index * noteSpacing);
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + index * noteSpacing + noteTime);
       
       osc.connect(gainNode);
@@ -1236,6 +1245,18 @@ function renderTreeDetail() {
       const actions = document.createElement('div');
       actions.className = 'task-actions';
 
+      // Timer button if task is not done (v6)
+      if (task.status !== 'done') {
+        const timerBtn = document.createElement('button');
+        timerBtn.className = 'timer-btn';
+        timerBtn.innerHTML = '⏱️ 集中';
+        timerBtn.title = '25分間の集中タイマーを開始';
+        timerBtn.addEventListener('click', () => {
+          startFocusTimer(task.id);
+        });
+        actions.appendChild(timerBtn);
+      }
+
       // Status Selector Triggers
       const selector = document.createElement('div');
       selector.className = 'status-selector';
@@ -2122,3 +2143,110 @@ preloadAllImages();
 // Initialize Garden view on load
 renderGarden();
 checkWaterStatus();
+
+// ----------------------------------------------------
+// POMODORO FOCUS TIMER SYSTEM (v6)
+// ----------------------------------------------------
+let focusTimerId = null;
+let focusTimeRemaining = 0;
+let focusTaskId = null;
+
+function startFocusTimer(taskId) {
+  const tree = state.trees.find(t => t.id === state.currentTreeId);
+  if (!tree) return;
+  const task = tree.tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  focusTaskId = taskId;
+  focusTimeRemaining = 25 * 60; // 25 minutes
+  
+  // Update UI
+  const taskNameEl = document.getElementById('focus-task-name');
+  const timeDisplayEl = document.getElementById('focus-time-display');
+  const overlayEl = document.getElementById('focus-timer-overlay');
+  
+  if (taskNameEl) taskNameEl.textContent = `「${task.text}」に集中しています...`;
+  if (timeDisplayEl) {
+    timeDisplayEl.textContent = "25:00";
+    timeDisplayEl.classList.add('ticking');
+  }
+  if (overlayEl) overlayEl.classList.remove('hidden');
+
+  // Play click/tick sound once at start
+  playSynthSound('success');
+
+  // Set interval
+  focusTimerId = setInterval(() => {
+    focusTimeRemaining--;
+    
+    // Play mechanical tick sound every second
+    playSynthSound('tick');
+
+    // Format time MM:SS
+    const mins = Math.floor(focusTimeRemaining / 60);
+    const secs = focusTimeRemaining % 60;
+    if (timeDisplayEl) {
+      timeDisplayEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    if (focusTimeRemaining <= 0) {
+      stopFocusTimer(true);
+    }
+  }, 1000);
+}
+
+function stopFocusTimer(completed = false) {
+  if (focusTimerId) {
+    clearInterval(focusTimerId);
+    focusTimerId = null;
+  }
+
+  const timeDisplayEl = document.getElementById('focus-time-display');
+  const overlayEl = document.getElementById('focus-timer-overlay');
+
+  if (timeDisplayEl) timeDisplayEl.classList.remove('ticking');
+  if (overlayEl) overlayEl.classList.add('hidden');
+
+  if (completed) {
+    // Auto set task to Done
+    updateTaskStatus(focusTaskId, 'done');
+    
+    // Give 100 FRUIT bonus
+    state.coins += 100;
+    localStorage.setItem('garden_focus_coins', state.coins);
+    updateCoinCount();
+    
+    // Special success synth sounds are triggered in updateTaskStatus, 
+    // but we add an extra dialog to cheer the user up
+    setTimeout(() => {
+      alert(`🎉 25分間の集中お疲れ様でした！\nタスクが「達成」になり、木が成長しました！\n集中ボーナスとして 【 100 🍒 FRUIT 】 を獲得しました！`);
+    }, 500);
+  } else {
+    playSynthSound('nudge');
+  }
+  
+  focusTaskId = null;
+}
+
+// Event Bindings for Timer Overlay buttons
+const cancelTimerBtn = document.getElementById('cancel-timer-btn');
+if (cancelTimerBtn) {
+  cancelTimerBtn.addEventListener('click', () => {
+    if (confirm("集中タイマーを中断しますか？\n（進捗やボーナスは保存されません）")) {
+      stopFocusTimer(false);
+    }
+  });
+}
+
+const fastForwardBtn = document.getElementById('timer-fastforward-btn');
+if (fastForwardBtn) {
+  fastForwardBtn.addEventListener('click', () => {
+    // Fast forward to 10 seconds remaining for testing/demo
+    if (focusTimerId && focusTimeRemaining > 10) {
+      focusTimeRemaining = 10;
+      const timeDisplayEl = document.getElementById('focus-time-display');
+      if (timeDisplayEl) timeDisplayEl.textContent = "00:10";
+      playSynthSound('success');
+    }
+  });
+}
