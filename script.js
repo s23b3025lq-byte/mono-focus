@@ -94,7 +94,10 @@ const elements = {
   shopModal: document.getElementById('shop-modal'),
   closeShopBtn: document.getElementById('close-shop-btn'),
   buyDecorBtns: document.querySelectorAll('.btn-buy'),
-  waterTreeBtn: document.getElementById('water-tree-btn')
+  waterTreeBtn: document.getElementById('water-tree-btn'),
+  openAboutBtn: document.getElementById('open-about-btn'),
+  aboutModal: document.getElementById('about-modal'),
+  closeAboutBtn: document.getElementById('close-about-btn')
 };
 
 // Particle Animation Variables for Task Completion (v4)
@@ -2250,3 +2253,15 @@ if (fastForwardBtn) {
     }
   });
 }
+
+// About Modal control logic (v6-extra)
+function openAbout() {
+  elements.aboutModal.classList.remove('hidden');
+}
+
+function closeAbout() {
+  elements.aboutModal.classList.add('hidden');
+}
+
+if (elements.openAboutBtn) elements.openAboutBtn.addEventListener('click', openAbout);
+if (elements.closeAboutBtn) elements.closeAboutBtn.addEventListener('click', closeAbout);

@@ -34,6 +34,9 @@
           <button id="open-basket-btn" class="basket-btn" title="収穫した木（アーカイブ）を見る">
             🧺 収穫カゴ
           </button>
+          <button id="open-about-btn" class="about-btn" title="MONO-FOCUS について">
+            ℹ️
+          </button>
           <button id="open-settings-btn" class="settings-btn" title="Settings">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
@@ -299,6 +302,31 @@
       
       <div style="display: flex; justify-content: center;">
         <button id="cancel-timer-btn" class="btn-organic" style="background-color: #8C8275; padding: 0.6rem 1.8rem; font-size: 0.9rem;">諦める</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. ABOUT / AI VISION MODAL (v6-extra) -->
+  <div id="about-modal" class="modal-overlay hidden" style="z-index: 2100;">
+    <div class="modal-content" style="max-width: 550px;">
+      <h2 class="modal-title" style="font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+        🌿 MONO-FOCUS について
+      </h2>
+      <p class="modal-desc" style="margin-bottom: 1.5rem;">
+        MONO-FOCUS は、課題を「木」として植え、タスクを消化しながら美しく成長させていく、スイスデザイン調のタスク＆集中管理アプリです。
+      </p>
+
+      <div style="background-color: rgba(46, 42, 37, 0.03); border: 1px solid rgba(46, 42, 37, 0.08); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: #2E2A25;">
+          🔮 自分にとってのAIとは（AI Vision）
+        </h3>
+        <p style="font-size: 0.9rem; line-height: 1.6; color: #5C544A; margin: 0; text-align: justify;">
+          講義開始前、私にとってAIは「指示したコードを自動で書いてくれる便利なツール」でした。しかし、この講義を通じてAIとペアプログラミングを行い、MONO-FOCUSというプロダクトを共に作り上げる中でその認識は大きく変化しました。今やAIは単なる受動的なツールではなく、私のアイデアの種を具現化し、技術的な壁を共に乗り越えてくれる「対等な伴走者（共創パートナー）」です。自動タスク分解やWeb Audioを用いたチック音の実装など、自分一人では諦めていた難解な課題も、対話を通じて解決し形にできました。AIは私の創造性と可能性を大きく広げてくれる存在へと進化しました。
+        </p>
+      </div>
+
+      <div class="flex justify-end" style="display: flex; justify-content: flex-end;">
+        <button id="close-about-btn" class="btn-organic">閉じる</button>
       </div>
     </div>
   </div>
